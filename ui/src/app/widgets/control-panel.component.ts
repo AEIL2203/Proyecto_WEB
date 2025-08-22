@@ -62,4 +62,13 @@ export class ControlPanelComponent implements OnChanges {
     const playerId = team === 'HOME' ? this.selHomePlayerId : this.selAwayPlayerId;
     this.api.foul(this.game.gameId, team, { playerId }).subscribe(() => { this.refresh(); this.refreshFouls(); });
   }
+
+  removeFoul(team:'HOME'|'AWAY') {
+    const playerId = team === 'HOME' ? this.selHomePlayerId : this.selAwayPlayerId;
+    this.api.removeFoul(this.game.gameId, team, { playerId }).subscribe(() => { this.refresh(); this.refreshFouls(); });
+  }
+
+  removeScore(team:'HOME'|'AWAY') {
+    this.api.removeScore(this.game.gameId, team).subscribe(() => this.refresh());
+  }
 }

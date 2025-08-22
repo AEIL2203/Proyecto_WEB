@@ -164,6 +164,87 @@ public static class GameEndpoints
             return Results.NoContent();
         }).WithOpenApi();
 
+        g.MapPost("/games/{id:int}/remove-foul", async (int id, [FromBody] FoulDto b) =>
+        {
+            var team = (b?.Team ?? "").Trim().ToUpperInvariant();
+            if (team is not ("HOME" or "AWAY")) return Results.BadRequest(new { error = "Team HOME/AWAY." });
+
+            using var c = Open(cs());
+            using var tx = c.BeginTransaction();
+
+            // Buscar la falta más reciente del equipo (y jugador si se especifica)
+            var sql = $@"
+                SELECT TOP 1 EventId 
+                FROM {T}MatchEvents 
+                WHERE GameId=@id AND Team=@team AND EventType='FOUL'
+                {(b?.PlayerId.HasValue == true ? "AND PlayerId=@pid" : "")}
+                ORDER BY EventId DESC;";
+
+            var eventId = await One<int?>(c, sql, new { id, team, pid = b?.PlayerId }, tx);
+            
+            if (eventId == null) 
+            { 
+                tx.Rollback(); 
+                return Results.BadRequest(new { error = "No se encontró falta para restar." }); 
+            }
+
+            // Eliminar la falta encontrada
+            await Exec(c, $"DELETE FROM {T}MatchEvents WHERE EventId=@eventId;", new { eventId }, tx);
+
+            // Registrar el evento de remoción de falta
+            await Exec(c, $@"
+                INSERT INTO {T}MatchEvents(GameId, Quarter, Team, EventType, PlayerId)
+                SELECT @id, Quarter, @team, 'REMOVE_FOUL', @pid FROM {T}Matches WHERE GameId=@id;",
+                new { id, team, pid = b?.PlayerId }, tx);
+
+            tx.Commit();
+            return Results.NoContent();
+        }).WithOpenApi();
+
+        g.MapPost("/games/{id:int}/remove-score", async (int id, [FromBody] ScoreDto b) =>
+        {
+            var team = (b?.Team ?? "").Trim().ToUpperInvariant();
+            if (team is not ("HOME" or "AWAY")) return Results.BadRequest(new { error = "Team HOME/AWAY." });
+
+            using var c = Open(cs());
+            using var tx = c.BeginTransaction();
+
+            // Buscar la última anotación del equipo
+            var lastScore = await One<(int EventId, string EventType)>(c, $@"
+                SELECT TOP 1 EventId, EventType 
+                FROM {T}MatchEvents 
+                WHERE GameId=@id AND Team=@team AND EventType IN ('POINT_1','POINT_2','POINT_3')
+                ORDER BY EventId DESC;", new { id, team }, tx);
+            
+            if (lastScore.Equals(default)) 
+            { 
+                tx.Rollback(); 
+                return Results.BadRequest(new { error = "No se encontró anotación para restar." }); 
+            }
+
+            // Extraer puntos del tipo de evento
+            var points = int.Parse(lastScore.EventType.Split('_')[1]);
+
+            // Restar puntos del marcador
+            await Exec(c, $@"
+                UPDATE {T}Matches
+                SET HomeScore = CASE WHEN @team='HOME' THEN IIF(HomeScore>=@pts, HomeScore-@pts, HomeScore) ELSE HomeScore END,
+                    AwayScore = CASE WHEN @team='AWAY' THEN IIF(AwayScore>=@pts, AwayScore-@pts, AwayScore) ELSE AwayScore END
+                WHERE GameId=@id;", new { id, team, pts = points }, tx);
+
+            // Eliminar el evento de anotación
+            await Exec(c, $"DELETE FROM {T}MatchEvents WHERE EventId=@eventId;", new { eventId = lastScore.EventId }, tx);
+
+            // Registrar el evento de remoción de puntos
+            await Exec(c, $@"
+                INSERT INTO {T}MatchEvents(GameId, Quarter, Team, EventType)
+                SELECT @id, Quarter, @team, 'REMOVE_SCORE' FROM {T}Matches WHERE GameId=@id;",
+                new { id, team }, tx);
+
+            tx.Commit();
+            return Results.NoContent();
+        }).WithOpenApi();
+
         g.MapPost("/games/{id:int}/undo", async (int id) =>
         {
             using var c = Open(cs());

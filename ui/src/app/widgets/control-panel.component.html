@@ -14,6 +14,7 @@
     <button class="border rounded px-3 py-1" (click)="score('HOME',1)" [disabled]="game.status!=='IN_PROGRESS'">+1</button>
     <button class="border rounded px-3 py-1" (click)="score('HOME',2)" [disabled]="game.status!=='IN_PROGRESS'">+2</button>
     <button class="border rounded px-3 py-1" (click)="score('HOME',3)" [disabled]="game.status!=='IN_PROGRESS'">+3</button>
+    <button class="border rounded px-3 py-1 bg-orange-50 hover:bg-orange-100" (click)="removeScore('HOME')" [disabled]="game.status!=='IN_PROGRESS' || game.homeScore === 0">-Pts</button>
 
     <select [(ngModel)]="selHomePlayerId" class="border rounded px-2 py-1" [disabled]="!homePlayers.length">
       <option [ngValue]="undefined">Jugador HOME (opcional)</option>
@@ -22,7 +23,8 @@
       </option>
     </select>
 
-    <button class="border rounded px-3 py-1" (click)="foul('HOME')" [disabled]="game.status!=='IN_PROGRESS'">Foul</button>
+    <button class="border rounded px-3 py-1" (click)="foul('HOME')" [disabled]="game.status!=='IN_PROGRESS'">+Foul</button>
+    <button class="border rounded px-3 py-1 bg-red-50 hover:bg-red-100" (click)="removeFoul('HOME')" [disabled]="game.status!=='IN_PROGRESS' || teamFouls.home === 0">-Foul</button>
 
     <span class="ml-2 text-sm" [class.text-red-600]="teamFouls.home >= 5">
       Faltas HOME (Q{{game.quarter}}): {{ teamFouls.home }} {{ teamFouls.home >= 5 ? '(Penalización)' : '' }}
@@ -35,6 +37,7 @@
     <button class="border rounded px-3 py-1" (click)="score('AWAY',1)" [disabled]="game.status!=='IN_PROGRESS'">+1</button>
     <button class="border rounded px-3 py-1" (click)="score('AWAY',2)" [disabled]="game.status!=='IN_PROGRESS'">+2</button>
     <button class="border rounded px-3 py-1" (click)="score('AWAY',3)" [disabled]="game.status!=='IN_PROGRESS'">+3</button>
+    <button class="border rounded px-3 py-1 bg-orange-50 hover:bg-orange-100" (click)="removeScore('AWAY')" [disabled]="game.status!=='IN_PROGRESS' || game.awayScore === 0">-Pts</button>
 
     <select [(ngModel)]="selAwayPlayerId" class="border rounded px-2 py-1" [disabled]="!awayPlayers.length">
       <option [ngValue]="undefined">Jugador AWAY (opcional)</option>
@@ -43,7 +46,8 @@
       </option>
     </select>
 
-    <button class="border rounded px-3 py-1" (click)="foul('AWAY')" [disabled]="game.status!=='IN_PROGRESS'">Foul</button>
+    <button class="border rounded px-3 py-1" (click)="foul('AWAY')" [disabled]="game.status!=='IN_PROGRESS'">+Foul</button>
+    <button class="border rounded px-3 py-1 bg-red-50 hover:bg-red-100" (click)="removeFoul('AWAY')" [disabled]="game.status!=='IN_PROGRESS' || teamFouls.away === 0">-Foul</button>
 
     <span class="ml-2 text-sm" [class.text-red-600]="teamFouls.away >= 5">
       Faltas AWAY (Q{{game.quarter}}): {{ teamFouls.away }} {{ teamFouls.away >= 5 ? '(Penalización)' : '' }}

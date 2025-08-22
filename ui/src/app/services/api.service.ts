@@ -163,6 +163,18 @@ export class ApiService {
     return this.http.post(`${this.base}/games/${id}/foul`, body);
   }
 
+  // NUEVO: Restar falta
+  removeFoul(id: number, team: 'HOME'|'AWAY', opts?: { playerId?: number; playerNumber?: number }) {
+    const body: any = { team, playerId: opts?.playerId ?? null, playerNumber: opts?.playerNumber ?? null };
+    return this.http.post(`${this.base}/games/${id}/remove-foul`, body);
+  }
+
+  // NUEVO: Restar puntos (última anotación)
+  removeScore(id: number, team: 'HOME'|'AWAY') {
+    const body: any = { team };
+    return this.http.post(`${this.base}/games/${id}/remove-score`, body);
+  }
+
   undo(id: number) {
     return this.http.post(`${this.base}/games/${id}/undo`, {});
   }
