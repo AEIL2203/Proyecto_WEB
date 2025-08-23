@@ -1,6 +1,10 @@
 services:
   db:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    image: marcador-mssql:2022
+    platform: linux/amd64
     container_name: marcador_db
     environment:
       - ACCEPT_EULA=Y
@@ -17,7 +21,8 @@ services:
     profiles: ["db", "all"]
 
   db_init:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: marcador-mssql:2022
+    platform: linux/amd64
     container_name: marcador_db_init
     depends_on:
       db:
@@ -27,7 +32,7 @@ services:
     volumes:
       - ./db:/db
       - ./scripts:/scripts
-    entrypoint: ["/bin/bash","-c","/scripts/db-init.sh"]
+    entrypoint: ["/bin/bash","-lc","chmod +x /scripts/db-init.sh && sed -i 's/\r$//' /scripts/db-init.sh && /scripts/db-init.sh"]
     restart: "no"
     profiles: ["db", "all"]
 

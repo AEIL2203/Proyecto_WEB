@@ -1,20 +1,25 @@
-<div class="border rounded p-3 grid gap-3">
-  <div class="font-semibold">Gestión de jugadores por equipo</div>
+<div class="card p-3">
+  <div class="card-header" style="display:block; text-align:center;">
+    <div class="card-title" style="margin-bottom: 4px;">Gestión de jugadores por equipo</div>
+    <div class="card-subtitle" style="display:block;">Administra la plantilla por equipo</div>
+  </div>
 
   <!-- Selección de equipo -->
-  <div class="flex flex-wrap items-center gap-2">
-    <label>Equipo:</label>
-    <select #teamSel class="border rounded px-2 py-1" (change)="onSelectTeam(teamSel.value)">
-      <option [value]="0">Seleccione equipo…</option>
-      <option *ngFor="let t of teams; trackBy: trackTeam" [value]="t.teamId">
-        {{ t.name }} (#{{t.teamId}})
-      </option>
-    </select>
+  <div class="input-group" style="margin-bottom: 12px;">
+    <div class="field" style="min-width:260px; max-width:420px;">
+      <label>Equipo</label>
+      <select #teamSel class="select" (change)="onSelectTeam(teamSel.value)">
+        <option [value]="0">Seleccione equipo…</option>
+        <option *ngFor="let t of teams; trackBy: trackTeam" [value]="t.teamId">
+          {{ t.name }} (#{{t.teamId}})
+        </option>
+      </select>
+    </div>
   </div>
 
   <!-- Lista de jugadores -->
   <div *ngIf="selectedTeamId !== null; else noTeam">
-    <div class="text-sm text-gray-600">Equipo #{{ selectedTeamId }}</div>
+    <div class="muted text-sm" style="margin-bottom: 10px;">Equipo #{{ selectedTeamId }}</div>
 
     <div *ngIf="loading">Cargando jugadores…</div>
     <div *ngIf="!loading">
@@ -28,34 +33,42 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let p of players; trackBy: trackPlayer">
+          <tr *ngFor="let p of players; trackBy: trackPlayer" style="height: 42px;">
             <td>{{ p.number ?? '—' }}</td>
             <td>{{ p.name }}</td>
             <td>{{ p.position || '' }}</td>
-            <td><button class="border rounded px-2 py-0.5" (click)="deletePlayer(p)">Eliminar</button></td>
+            <td class="text-right">
+              <button class="btn btn-ghost btn-sm" title="Eliminar" aria-label="Eliminar jugador" (click)="deletePlayer(p)" style="padding: 4px 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+                  <path d="M9 3h6a1 1 0 0 1 1 1v2h4v2h-2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8H4V6h4V4a1 1 0 0 1 1-1zm1 4v12h2V7h-2zm4 0v12h2V7h-2zM10 5v1h4V5h-4z"/>
+                </svg>
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
-      <ng-template #empty><div class="text-sm text-gray-600">Sin jugadores.</div></ng-template>
+      <ng-template #empty><div class="text-sm muted">Sin jugadores.</div></ng-template>
     </div>
 
     <!-- Alta de jugador -->
-    <div class="mt-3 border-t pt-3">
-      <div class="font-medium mb-2">Agregar jugador</div>
-      <div class="flex flex-wrap items-center gap-2">
-        <input [(ngModel)]="pName" placeholder="Nombre" class="border rounded px-2 py-1" />
-        <input [(ngModel)]="pNumber" type="number" placeholder="N° (0–99 opcional)" class="border rounded px-2 py-1" />
-        <input [(ngModel)]="pPosition" placeholder="Posición (opcional)" class="border rounded px-2 py-1" />
-        <button class="px-3 py-1 rounded bg-green-600 text-white" [disabled]="saving" (click)="createPlayer()">
+    <div class="card-subsection" style="margin-top: 14px;">
+      <div class="section-title" style="margin-bottom: 10px;">Agregar jugador</div>
+      <div class="input-group" style="margin-bottom: 10px;">
+        <input [(ngModel)]="pName" placeholder="Nombre" class="input" />
+        <input [(ngModel)]="pNumber" type="number" placeholder="N° (0–99 opcional)" class="input" />
+        <input [(ngModel)]="pPosition" placeholder="Posición (opcional)" class="input" />
+      </div>
+      <div style="display:flex; justify-content:center; width:100%;">
+        <button class="btn btn-success" [disabled]="saving" (click)="createPlayer()" style="min-width: 180px;">
           {{ saving ? 'Guardando…' : 'Agregar' }}
         </button>
       </div>
-      <div *ngIf="errorMsg" class="text-sm text-red-600 mt-1">{{ errorMsg }}</div>
-      <div class="text-xs text-gray-500 mt-1">* UNIQUE (Team, Number) cuando el número no es nulo.</div>
+      <div *ngIf="errorMsg" class="error">{{ errorMsg }}</div>
+      <div class="text-xs muted mt-1">* UNIQUE (Team, Number) cuando el número no es nulo.</div>
     </div>
   </div>
 
   <ng-template #noTeam>
-    <div class="text-sm text-gray-600">Selecciona un equipo para gestionar su plantilla.</div>
+    <div class="text-sm muted">Selecciona un equipo para gestionar su plantilla.</div>
   </ng-template>
 </div>

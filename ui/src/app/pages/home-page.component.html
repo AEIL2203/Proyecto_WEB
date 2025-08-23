@@ -46,26 +46,31 @@
 
       <!-- Crear partido emparejando por IDs -->
       <div class="mt-4 pt-3">
-        <div class="font-semibold mb-2">Crear/Emparejar partido</div>
-        <div class="input-group">
-          <div class="field">
-            <label>Local</label>
-            <select #homeSel class="select">
-              <option [value]="0">HomeTeamId…</option>
-              <option *ngFor="let t of teams" [value]="t.teamId">{{ t.name }}</option>
-            </select>
+        <div class="font-semibold mb-2" style="text-align:center;">Crear/Emparejar partido</div>
+        <div style="display:flex; justify-content:center; width:100%;">
+          <div class="input-group" style="width:100%; max-width:640px; margin-bottom:10px;">
+            <div class="field" style="flex:1; min-width:220px;">
+              <label>Local</label>
+              <select #homeSel class="select">
+                <option [value]="0">HomeTeamId…</option>
+                <option *ngFor="let t of teams" [value]="t.teamId">{{ t.name }}</option>
+              </select>
+            </div>
+            <div class="field" style="flex:1; min-width:220px;">
+              <label>Visita</label>
+              <select #awaySel class="select">
+                <option [value]="0">AwayTeamId…</option>
+                <option *ngFor="let t of teams" [value]="t.teamId">{{ t.name }}</option>
+              </select>
+            </div>
           </div>
-          <div class="field">
-            <label>Visita</label>
-            <select #awaySel class="select">
-              <option [value]="0">AwayTeamId…</option>
-              <option *ngFor="let t of teams" [value]="t.teamId">{{ t.name }}</option>
-            </select>
-          </div>
+        </div>
+        <div style="display:flex; justify-content:center; width:100%;">
           <button
             class="btn btn-success"
             [disabled]="creating"
-            (click)="createGame(+homeSel.value, +awaySel.value)">
+            (click)="createGame(+homeSel.value, +awaySel.value)"
+            style="min-width:200px;">
             {{ creating ? 'Creando…' : 'Crear' }}
           </button>
         </div>
@@ -74,35 +79,38 @@
 
     <!-- Lista de equipos -->
     <div class="card p-3">
-      <div class="card-header">
-        <div class="card-title">Equipos existentes</div>
-        <div class="card-subtitle">Los últimos creados</div>
+      <div class="card-header" style="display:block; text-align:center;">
+        <div class="card-title" style="margin-bottom: 4px;">Equipos existentes</div>
+        <div class="card-subtitle" style="display:block;">Los últimos creados</div>
       </div>
-      <ul class="list-clean text-sm">
-        <li *ngFor="let t of teams">
-          {{ t.name }} <span class="muted text-xs">#{{t.teamId}}</span>
-        </li>
-      </ul>
+      <div style="max-height: 320px; overflow: auto; margin-top: 6px; border-radius: 10px;">
+        <ul class="list-clean text-sm" style="margin:0;">
+          <li *ngFor="let t of teams" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <span>{{ t.name }}</span>
+            <span class="text-xs" style="opacity:.7; border:1px solid rgba(255,255,255,0.18); padding:2px 8px; border-radius:999px;">#{{t.teamId}}</span>
+          </li>
+        </ul>
+      </div>
     </div>
 
         <!-- Crear equipo -->
     <div class="card p-3">
-      <div class="card-header">
+      <div class="card-header" style="display:block; text-align:center;">
         <div class="card-title">Crear equipo</div>
       </div>
-      <div class="input-group">
+      <div class="input-group" style="margin-bottom: 10px;">
         <div class="field" style="flex:1; min-width:260px;">
           <label>Nombre del equipo</label>
           <input [(ngModel)]="newTeamName" placeholder="Ej. Los halcones" class="input" />
         </div>
-        <div class="field">
-          <label>&nbsp;</label>
-          <button class="btn btn-success"
-                  [disabled]="creating || !newTeamName.trim()"
-                  (click)="createTeam()">
-            {{ creating ? 'Creando…' : 'Crear equipo' }}
-          </button>
-        </div>
+      </div>
+      <div style="display:flex; justify-content:center; width:100%; margin-bottom: 8px;">
+        <button class="btn btn-success"
+                [disabled]="creating || !newTeamName.trim()"
+                (click)="createTeam()"
+                style="min-width: 200px;">
+          {{ creating ? 'Creando…' : 'Crear equipo' }}
+        </button>
       </div>
       <div class="text-xs muted mt-1">* El nombre debe ser único.</div>
     </div>
