@@ -72,7 +72,7 @@ export class ClockService {
   }
 
   /** Resetea en servidor */
-  resetForNewQuarter(gameId: number, quarterMs = 10 * 60 * 1000) {
+  resetForNewQuarter(gameId: number, quarterMs = 12 * 60 * 1000) {
     this.http.post(`${this.base}/games/${gameId}/clock/reset`, { quarterMs })
       .pipe(tap(() => this.clockChanged$.next(gameId)))
       .subscribe({ error: () => {/* opcional: toast/log */} });

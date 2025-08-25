@@ -42,7 +42,7 @@ public static class GameEndpoints
             await Exec(c,
                 $@"IF NOT EXISTS(SELECT 1 FROM {T}MatchTimers WHERE GameId=@id)
                    INSERT INTO {T}MatchTimers(GameId, Quarter, QuarterMs, RemainingMs, Running, StartedAt, UpdatedAt)
-                   VALUES(@id, 1, 600000, 600000, 0, NULL, SYSUTCDATETIME());",
+                   VALUES(@id, 1, 720000, 720000, 0, NULL, SYSUTCDATETIME());",
                 new { id }, tx);
 
             tx.Commit();
@@ -324,7 +324,7 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
 
             await Exec(c,
                 $@"INSERT INTO {T}MatchTimers(GameId, Quarter, QuarterMs, RemainingMs, Running, StartedAt, UpdatedAt)
-                   VALUES(@id, 1, 600000, 600000, 0, NULL, SYSUTCDATETIME());",
+                   VALUES(@id, 1, 720000, 720000, 0, NULL, SYSUTCDATETIME());",
                 new { id }, tx);
 
             tx.Commit();

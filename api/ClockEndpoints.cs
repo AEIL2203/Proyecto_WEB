@@ -65,7 +65,7 @@ public static class ClockEndpoints
                 -- Asegura fila de temporizador
                 IF NOT EXISTS (SELECT 1 FROM [HoopsDB].[core].[MatchTimers] WHERE GameId=@id)
                 BEGIN
-                    DECLARE @qms INT = 600000; -- 10 min default
+                    DECLARE @qms INT = 720000; -- 12 min default
                     INSERT INTO [HoopsDB].[core].[MatchTimers](GameId, Quarter, QuarterMs, RemainingMs, Running, StartedAt, UpdatedAt)
                     VALUES(@id, 1, @qms, @qms, 0, NULL, SYSUTCDATETIME());
                 END
@@ -105,7 +105,7 @@ public static class ClockEndpoints
                 -- Asegura fila de temporizador
                 IF NOT EXISTS (SELECT 1 FROM [HoopsDB].[core].[MatchTimers] WHERE GameId=@id)
                 BEGIN
-                    DECLARE @def INT = COALESCE(@qms, 600000);
+                    DECLARE @def INT = COALESCE(@qms, 720000);
                     INSERT INTO [HoopsDB].[core].[MatchTimers](GameId, Quarter, QuarterMs, RemainingMs, Running, StartedAt, UpdatedAt)
                     VALUES(@id, 1, @def, @def, 0, NULL, SYSUTCDATETIME());
                 END

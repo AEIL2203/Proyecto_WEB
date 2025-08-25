@@ -80,8 +80,8 @@ BEGIN
         GameId      INT         NOT NULL PRIMARY KEY
                                 REFERENCES core.Matches(GameId) ON DELETE CASCADE,
         Quarter     TINYINT     NOT NULL DEFAULT 1,
-        QuarterMs   INT         NOT NULL DEFAULT 600000,  -- 10 min por cuarto (FIBA)
-        RemainingMs INT         NOT NULL DEFAULT 600000,  -- 10 min por cuarto (FIBA)
+        QuarterMs   INT         NOT NULL DEFAULT 720000,  -- 12 min por cuarto (NBA)
+        RemainingMs INT         NOT NULL DEFAULT 720000,  -- 12 min por cuarto (NBA)
         Running     BIT         NOT NULL DEFAULT 0,
         StartedAt   DATETIME2   NULL,
         UpdatedAt   DATETIME2   NOT NULL DEFAULT SYSUTCDATETIME()
