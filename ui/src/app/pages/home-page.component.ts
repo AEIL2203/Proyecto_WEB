@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AdminTeamRosterComponent } from '../widgets/admin-team-roster.component';
 import { ApiService, Game, GameDetail, Team } from '../services/api.service';
+import { NotificationService } from '../services/notification.service';
 import { ScoreboardComponent } from '../widgets/scoreboard.component';
 import { ControlPanelComponent } from '../widgets/control-panel.component';
 import { ClockComponent } from '../widgets/clock.component';
@@ -41,7 +42,7 @@ export class HomePageComponent {
   games: Game[] = [];
   detail: GameDetail | null = null;
 
-  constructor(private api: ApiService) {
+  constructor(private api: ApiService, private notifications: NotificationService) {
     this.reloadAll();
   }
 
@@ -62,13 +63,27 @@ export class HomePageComponent {
   createGame(homeTeamId: number, awayTeamId: number) {
     if (!homeTeamId || !awayTeamId || homeTeamId === awayTeamId) return;
     this.creating = true;
+    
+    // Obtener nombres de los equipos para la notificación
+    const homeTeam = this.teams.find(t => t.teamId === homeTeamId);
+    const awayTeam = this.teams.find(t => t.teamId === awayTeamId);
+    
     this.api.pairGame(homeTeamId, awayTeamId, this.selectedQuarterMs).subscribe({
       next: ({ gameId }) => {
         this.reloadGames();
+        // Mostrar notificación de éxito con nombres de equipos
+        if (homeTeam && awayTeam) {
+          this.notifications.showSuccess(
+            `🏀 Enfrentamiento creado: ${homeTeam.name} vs ${awayTeam.name}`,
+            5000
+          );
+        }
         //Abre el panel de control del partido recién creado
         this.view(gameId);
       },
-      error: () => {},
+      error: () => {
+        this.notifications.showError('Error al crear el enfrentamiento');
+      },
       complete: () => (this.creating = false),
     });
   }
