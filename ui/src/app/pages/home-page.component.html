@@ -59,6 +59,7 @@
             <div class="field" style="flex:1; min-width:180px;">
               <label>Duración del cuarto</label>
               <select [(ngModel)]="selectedQuarterMs" class="select">
+                <option [value]="30000">30 segundos</option>
                 <option [value]="300000">5 minutos</option>
                 <option [value]="600000">10 minutos</option>
                 <option [value]="720000">12 minutos</option>

@@ -132,4 +132,16 @@ export class ScoreboardComponent implements OnInit, OnDestroy, OnChanges {
       .filter(f => f.team === team)
       .reduce((total, f) => total + f.fouls, 0);
   }
+
+  // Get quarter text for display (Q1-Q4, OT1, OT2, etc.)
+  getQuarterText(): string {
+    if (!this.game) return 'Q1';
+    
+    if (this.game.quarter <= 4) {
+      return `Q${this.game.quarter}`;
+    } else {
+      const overtimeNum = this.game.quarter - 4;
+      return `OT${overtimeNum}`;
+    }
+  }
 }

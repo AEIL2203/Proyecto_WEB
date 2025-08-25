@@ -76,6 +76,7 @@ export class HomePageComponent {
   // Obtener texto descriptivo para la duración seleccionada
   getQuarterDurationText(): string {
     switch (this.selectedQuarterMs) {
+      case 30000: return '30 segundos';
       case 300000: return '5 minutos';
       case 600000: return '10 minutos';
       case 720000: return '12 minutos';

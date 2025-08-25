@@ -4,7 +4,6 @@ import { Observable, map } from 'rxjs';
 import { ClockService, ClockState } from '../services/clock.service';
 import { interval, Subscription } from 'rxjs';
 import { ApiService, FoulSummary } from '../services/api.service';
-import { AudioService } from '../services/audio.service';
 
 @Pipe({ name: 'msToClock', standalone: true })
 export class MsToClockPipe implements PipeTransform {
@@ -30,6 +29,8 @@ export class ClockComponent implements OnChanges, OnDestroy {
   @Input() showTeamFouls = true; 
   /** Mostrar/ocultar botones (en público: [controls]="false") */
   @Input() controls = true;
+  /** Enable test mode with 30-second quarters */
+  @Input() testMode = false;
 
   @Output() expired = new EventEmitter<void>();
 
@@ -45,7 +46,7 @@ export class ClockComponent implements OnChanges, OnDestroy {
   busy = false;
   private foulsSub?: Subscription; 
 
-  constructor(private clock: ClockService, private api: ApiService, private audio: AudioService) {}
+  constructor(private clock: ClockService, private api: ApiService) {}
 
   ngOnChanges(ch: SimpleChanges): void {
     if (!this.gameId) return;
@@ -56,11 +57,7 @@ export class ClockComponent implements OnChanges, OnDestroy {
       this.prevRunning = false;
       this.vm$ = this.clock.state$(this.gameId).pipe(
         map(s => {
-          if (this.prevRunning && this.prevRemaining > 0 && s.remainingMs === 0) {
-            this.expired.emit();
-            // Reproducir silbato cuando el reloj llega a cero
-            this.audio.playQuarterEndWhistle();
-          }
+          if (this.prevRunning && this.prevRemaining > 0 && s.remainingMs === 0) this.expired.emit();
           this.vmSnap = s;
           this.prevRunning = !!s.running;
           this.prevRemaining = s.remainingMs;
@@ -75,9 +72,10 @@ export class ClockComponent implements OnChanges, OnDestroy {
       else this.clock.pause(this.gameId);
     }
 
-    // 3) Si cambia el quarter realmente, reinicia duración desde backend (sin especificar quarterMs para mantener el original)
+    // 3) Si cambia el quarter realmente, reinicia duración (30s en test mode o la original)
     if (ch['quarter'] && !ch['quarter'].firstChange && ch['quarter'].previousValue !== ch['quarter'].currentValue) {
-      this.clock.resetForNewQuarter(this.gameId); // Sin quarterMs para preservar la duración original
+      const quarterMs = this.testMode ? 30000 : undefined;
+      this.clock.resetForNewQuarter(this.gameId, quarterMs);
       if (this.status === 'IN_PROGRESS') this.clock.start(this.gameId);
     }
       if (ch['gameId'] || ch['status'] || ch['quarter']) {
@@ -99,7 +97,9 @@ export class ClockComponent implements OnChanges, OnDestroy {
   resetQuarter() {
     if (this.busy || !this.gameId) return;
     this.busy = true;
-    this.clock.resetForNewQuarter(this.gameId); // Sin quarterMs para preservar la duración original
+    // Use 30 seconds for test mode, otherwise use default duration
+    const quarterMs = this.testMode ? 30000 : undefined;
+    this.clock.resetForNewQuarter(this.gameId, quarterMs);
     setTimeout(() => (this.busy = false), 150);
   }
   // +++ AÑADIR: inicia/renueva el polling de faltas

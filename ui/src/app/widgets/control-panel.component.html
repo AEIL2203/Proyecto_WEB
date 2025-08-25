@@ -7,7 +7,7 @@
   <!-- Acciones globales -->
   <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
     <button class="btn btn-success" (click)="start()"   [disabled]="game.status!=='SCHEDULED'">Start</button>
-    <button class="btn btn-primary" (click)="advance()" [disabled]="game.status!=='IN_PROGRESS' || game.quarter >= 4">Advance</button>
+    <button class="btn btn-primary" (click)="advance()" [disabled]="!canAdvance()">{{getAdvanceButtonText()}}</button>
     <button class="btn btn-primary" (click)="finish()"  [disabled]="game.status!=='IN_PROGRESS'">Finish</button>
     <button class="btn btn-ghost"  (click)="undo()"    [disabled]="!game">Undo</button>
   </div>
