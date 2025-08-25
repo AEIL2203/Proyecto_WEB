@@ -33,6 +33,9 @@ export class HomePageComponent {
   // NUEVO: nombre del equipo a crear
   newTeamName = '';
 
+  // Duración del cuarto seleccionada (en milisegundos)
+  selectedQuarterMs = 720000; // Default 12 min
+
   // datos
   teams: Team[] = [];
   games: Game[] = [];
@@ -59,7 +62,7 @@ export class HomePageComponent {
   createGame(homeTeamId: number, awayTeamId: number) {
     if (!homeTeamId || !awayTeamId || homeTeamId === awayTeamId) return;
     this.creating = true;
-    this.api.pairGame(homeTeamId, awayTeamId).subscribe({
+    this.api.pairGame(homeTeamId, awayTeamId, this.selectedQuarterMs).subscribe({
       next: ({ gameId }) => {
         this.reloadGames();
         //Abre el panel de control del partido recién creado
@@ -70,25 +73,33 @@ export class HomePageComponent {
     });
   }
 
-
-    createTeam() {
-      const name = this.newTeamName.trim();
-      if (!name) return;
-
-      this.creating = true;
-      this.api.createTeam(name).subscribe({
-        next: () => {
-          this.newTeamName = '';
-          this.creating = false;
-          this.reloadAll();
-        },
-        error: (err) => {
-          console.error('Error creando equipo', err);
-          this.creating = false;
-        }
-      });
+  // Obtener texto descriptivo para la duración seleccionada
+  getQuarterDurationText(): string {
+    switch (this.selectedQuarterMs) {
+      case 300000: return '5 minutos';
+      case 600000: return '10 minutos';
+      case 720000: return '12 minutos';
+      default: return '12 minutos';
     }
+  }
 
+  createTeam() {
+    const name = this.newTeamName.trim();
+    if (!name) return;
+
+    this.creating = true;
+    this.api.createTeam(name).subscribe({
+      next: () => {
+        this.newTeamName = '';
+        this.creating = false;
+        this.reloadAll();
+      },
+      error: (err) => {
+        console.error('Error creando equipo', err);
+        this.creating = false;
+      }
+    });
+  }
 
   // Hook desde <app-clock> cuando se agota el tiempo del cuarto
   onExpire() {

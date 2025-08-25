@@ -22,9 +22,9 @@ app.MapClockEndpoints(getCs);
 app.Run();
 
 // DTOs (manténlo aquí o muévelo a Dtos.cs)
-record CreateGameDto(string? Home, string? Away);
+record CreateGameDto(string? Home, string? Away, int? QuarterMs);
 record TeamCreateDto(string Name);
-record PairDto(int HomeTeamId, int AwayTeamId);
+record PairDto(int HomeTeamId, int AwayTeamId, int? QuarterMs);
 record CreatePlayerDto(string Name, byte? Number, string? Position);
 record UpdatePlayerDto(byte? Number, string? Name, string? Position, bool? Active);
 record ScoreDto(string Team, int Points, int? PlayerId, int? PlayerNumber);

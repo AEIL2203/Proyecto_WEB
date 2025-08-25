@@ -56,9 +56,17 @@
                 <option *ngFor="let t of teams" [value]="t.teamId">{{ t.name }}</option>
               </select>
             </div>
+            <div class="field" style="flex:1; min-width:180px;">
+              <label>Duración del cuarto</label>
+              <select [(ngModel)]="selectedQuarterMs" class="select">
+                <option [value]="300000">5 minutos</option>
+                <option [value]="600000">10 minutos</option>
+                <option [value]="720000">12 minutos</option>
+              </select>
+            </div>
           </div>
         </div>
-        <div style="display:flex; justify-content:center; width:100%;">
+        <div style="display:flex; justify-content:center; width:100%; margin-bottom:8px;">
           <button
             class="btn btn-success"
             [disabled]="creating"
@@ -67,6 +75,7 @@
             {{ creating ? 'Creando…' : 'Crear' }}
           </button>
         </div>
+        <div class="text-xs muted text-center">* Duración seleccionada: {{ getQuarterDurationText() }}</div>
       </div>
     </div>
 

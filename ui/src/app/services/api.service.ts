@@ -112,8 +112,10 @@ export class ApiService {
   }
 
 
-  createGame(home: string, away: string): Observable<{ gameId: number }> {
-    return this.http.post<any>(`${this.base}/games`, { home, away }).pipe(
+  createGame(home: string, away: string, quarterMs?: number): Observable<{ gameId: number }> {
+    const body: any = { home, away };
+    if (quarterMs) body.quarterMs = quarterMs;
+    return this.http.post<any>(`${this.base}/games`, body).pipe(
       map(r => ({ gameId: r.GameId ?? r.gameId }))
     );
   }
@@ -202,8 +204,10 @@ export class ApiService {
 
 
   /* ========== Emparejar (crear juego desde IDs de equipo) ========== */
-  pairGame(homeTeamId: number, awayTeamId: number): Observable<{ gameId: number }> {
-    return this.http.post<any>(`${this.base}/games/pair`, { homeTeamId, awayTeamId }).pipe(
+  pairGame(homeTeamId: number, awayTeamId: number, quarterMs?: number): Observable<{ gameId: number }> {
+    const body: any = { homeTeamId, awayTeamId };
+    if (quarterMs) body.quarterMs = quarterMs;
+    return this.http.post<any>(`${this.base}/games/pair`, body).pipe(
       map(r => ({ gameId: r.gameId ?? r.GameId }))
     );
   }
