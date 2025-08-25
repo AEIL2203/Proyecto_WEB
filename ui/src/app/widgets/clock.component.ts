@@ -75,9 +75,9 @@ export class ClockComponent implements OnChanges, OnDestroy {
       else this.clock.pause(this.gameId);
     }
 
-    // 3) Si cambia el quarter realmente, reinicia duración desde backend
+    // 3) Si cambia el quarter realmente, reinicia duración desde backend (sin especificar quarterMs para mantener el original)
     if (ch['quarter'] && !ch['quarter'].firstChange && ch['quarter'].previousValue !== ch['quarter'].currentValue) {
-      this.clock.resetForNewQuarter(this.gameId);
+      this.clock.resetForNewQuarter(this.gameId); // Sin quarterMs para preservar la duración original
       if (this.status === 'IN_PROGRESS') this.clock.start(this.gameId);
     }
       if (ch['gameId'] || ch['status'] || ch['quarter']) {
@@ -99,7 +99,7 @@ export class ClockComponent implements OnChanges, OnDestroy {
   resetQuarter() {
     if (this.busy || !this.gameId) return;
     this.busy = true;
-    this.clock.resetForNewQuarter(this.gameId);
+    this.clock.resetForNewQuarter(this.gameId); // Sin quarterMs para preservar la duración original
     setTimeout(() => (this.busy = false), 150);
   }
   // +++ AÑADIR: inicia/renueva el polling de faltas

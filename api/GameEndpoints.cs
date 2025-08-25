@@ -30,6 +30,11 @@ public static class GameEndpoints
         {
             var home = IsNullOrWhite(body?.Home) ? "Local" : body!.Home!.Trim();
             var away = IsNullOrWhite(body?.Away) ? "Visitante" : body!.Away!.Trim();
+            var quarterMs = body?.QuarterMs ?? 720000; // Default 12 min
+            
+            // Validate quarter duration (5min=300000ms, 10min=600000ms, 12min=720000ms)
+            if (quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
+                quarterMs = 720000;
 
             using var c = Open(cs());
             using var tx = c.BeginTransaction();
@@ -42,11 +47,11 @@ public static class GameEndpoints
             await Exec(c,
                 $@"IF NOT EXISTS(SELECT 1 FROM {T}MatchTimers WHERE GameId=@id)
                    INSERT INTO {T}MatchTimers(GameId, Quarter, QuarterMs, RemainingMs, Running, StartedAt, UpdatedAt)
-                   VALUES(@id, 1, 720000, 720000, 0, NULL, SYSUTCDATETIME());",
-                new { id }, tx);
+                   VALUES(@id, 1, @quarterMs, @quarterMs, 0, NULL, SYSUTCDATETIME());",
+                new { id, quarterMs }, tx);
 
             tx.Commit();
-            return Results.Created($"/api/games/{id}", new { gameId = id, home, away });
+            return Results.Created($"/api/games/{id}", new { gameId = id, home, away, quarterMs });
         }).WithOpenApi();
 
         g.MapGet("/games/{id:int}", async (int id) =>
@@ -303,6 +308,12 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
         {
             if (body.HomeTeamId <= 0 || body.AwayTeamId <= 0 || body.HomeTeamId == body.AwayTeamId)
                 return Results.BadRequest(new { error = "Equipos inválidos." });
+            
+            var quarterMs = body.QuarterMs ?? 720000; // Default 12 min
+            
+            // Validate quarter duration (5min=300000ms, 10min=600000ms, 12min=720000ms)
+            if (quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
+                quarterMs = 720000;
 
             using var c = Open(cs());
             using var tx = c.BeginTransaction();
@@ -324,11 +335,11 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
 
             await Exec(c,
                 $@"INSERT INTO {T}MatchTimers(GameId, Quarter, QuarterMs, RemainingMs, Running, StartedAt, UpdatedAt)
-                   VALUES(@id, 1, 720000, 720000, 0, NULL, SYSUTCDATETIME());",
-                new { id }, tx);
+                   VALUES(@id, 1, @quarterMs, @quarterMs, 0, NULL, SYSUTCDATETIME());",
+                new { id, quarterMs }, tx);
 
             tx.Commit();
-            return Results.Created($"/api/games/{id}", new { gameId = id, home, away });
+            return Results.Created($"/api/games/{id}", new { gameId = id, home, away, quarterMs });
         }).WithOpenApi();
 
         g.MapGet("/teams/{teamId:int}/players", async (int teamId) =>
