@@ -33,6 +33,8 @@ export class HomePageComponent {
 
   // NUEVO: nombre del equipo a crear
   newTeamName = '';
+  // Regla: solo letras (incluye acentos/ñ) y espacios
+  private teamNameRegex = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/;
 
   // Duración del cuarto seleccionada (en milisegundos)
   selectedQuarterMs = 720000; // Default 12 min
@@ -44,6 +46,13 @@ export class HomePageComponent {
 
   constructor(private api: ApiService, private notifications: NotificationService) {
     this.reloadAll();
+  }
+
+  // Validación pública para usar en template
+  isTeamNameValid(value: string): boolean {
+    const v = (value ?? '').trim();
+    if (!v) return false;
+    return this.teamNameRegex.test(v);
   }
 
   // ===== API wrappers (lógica mínima) =====
@@ -91,6 +100,7 @@ export class HomePageComponent {
   // Obtener texto descriptivo para la duración seleccionada
   getQuarterDurationText(): string {
     switch (this.selectedQuarterMs) {
+      case 30000: return '30 segundos';
       case 300000: return '5 minutos';
       case 600000: return '10 minutos';
       case 720000: return '12 minutos';
@@ -101,6 +111,7 @@ export class HomePageComponent {
   createTeam() {
     const name = this.newTeamName.trim();
     if (!name) return;
+    if (!this.isTeamNameValid(name)) return;
 
     this.creating = true;
     this.api.createTeam(name).subscribe({

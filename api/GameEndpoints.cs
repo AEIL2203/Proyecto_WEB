@@ -1,6 +1,7 @@
 using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using System.Text.RegularExpressions;
 
 public static class GameEndpoints
 {
@@ -32,8 +33,8 @@ public static class GameEndpoints
             var away = IsNullOrWhite(body?.Away) ? "Visitante" : body!.Away!.Trim();
             var quarterMs = body?.QuarterMs ?? 720000; // Default 12 min
             
-            // Validate quarter duration (5min=300000ms, 10min=600000ms, 12min=720000ms)
-            if (quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
+            // Validate quarter duration (30s=30000ms, 5min=300000ms, 10min=600000ms, 12min=720000ms)
+            if (quarterMs != 30000 && quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
                 quarterMs = 720000;
 
             using var c = Open(cs());
@@ -81,23 +82,58 @@ public static class GameEndpoints
             using var c = Open(cs());
             using var tx = c.BeginTransaction();
 
-            var cur = await One<(int Quarter, string Status)>(c, $"SELECT Quarter, Status FROM {T}Matches WHERE GameId=@id;", new { id }, tx);
-            if (cur == default) { tx.Rollback(); return Results.NotFound(); }
-            if (!string.Equals(cur.Status, "IN_PROGRESS", StringComparison.OrdinalIgnoreCase))
+            var game = await One<(int Quarter, string Status, int HomeScore, int AwayScore)>(c, 
+                $"SELECT Quarter, Status, HomeScore, AwayScore FROM {T}Matches WHERE GameId=@id;", new { id }, tx);
+            if (game == default) { tx.Rollback(); return Results.NotFound(); }
+            if (!string.Equals(game.Status, "IN_PROGRESS", StringComparison.OrdinalIgnoreCase))
             { tx.Rollback(); return Results.BadRequest(new { error = "Juego no está IN_PROGRESS." }); }
-            if (cur.Quarter >= 4) { tx.Rollback(); return Results.BadRequest(new { error = "Último cuarto." }); }
 
+            // Check if game is tied after quarter 4 or overtime
+            bool isTied = game.HomeScore == game.AwayScore;
+            bool isAfterRegulation = game.Quarter >= 4;
+            
+            // If after quarter 4+ and there's a winner, game should finish
+            if (isAfterRegulation && !isTied)
+            {
+                tx.Rollback(); 
+                return Results.BadRequest(new { error = "El juego debe finalizar - hay un ganador." });
+            }
+
+            // Advance to next quarter/overtime
             await Exec(c, $"UPDATE {T}Matches SET Quarter = Quarter + 1 WHERE GameId=@id;", new { id }, tx);
-            await Exec(c, $@"
-                UPDATE c
-                SET c.Quarter = g.Quarter,
-                    c.Running = 0,
-                    c.RemainingMs = c.QuarterMs,
-                    c.StartedAt = NULL,
-                    c.UpdatedAt = SYSUTCDATETIME()
-                FROM {T}MatchTimers c
-                INNER JOIN {T}Matches g ON g.GameId = c.GameId
-                WHERE c.GameId=@id;", new { id }, tx);
+            
+            // Determine duration: regular quarters use original duration, overtime is always 5 minutes
+            var quarterMs = isAfterRegulation ? 300000 : 0; // 5 minutes for overtime, 0 to use original for regular quarters
+            
+            if (quarterMs > 0)
+            {
+                // Overtime: set to 5 minutes
+                await Exec(c, $@"
+                    UPDATE c
+                    SET c.Quarter = g.Quarter,
+                        c.Running = 0,
+                        c.RemainingMs = @quarterMs,
+                        c.QuarterMs = @quarterMs,
+                        c.StartedAt = NULL,
+                        c.UpdatedAt = SYSUTCDATETIME()
+                    FROM {T}MatchTimers c
+                    INNER JOIN {T}Matches g ON g.GameId = c.GameId
+                    WHERE c.GameId=@id;", new { id, quarterMs }, tx);
+            }
+            else
+            {
+                // Regular quarter: preserve original duration
+                await Exec(c, $@"
+                    UPDATE c
+                    SET c.Quarter = g.Quarter,
+                        c.Running = 0,
+                        c.RemainingMs = c.QuarterMs,
+                        c.StartedAt = NULL,
+                        c.UpdatedAt = SYSUTCDATETIME()
+                    FROM {T}MatchTimers c
+                    INNER JOIN {T}Matches g ON g.GameId = c.GameId
+                    WHERE c.GameId=@id;", new { id }, tx);
+            }
 
             tx.Commit(); return Results.NoContent();
         }).WithOpenApi();
@@ -294,6 +330,9 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
         {
             var name = (body?.Name ?? "").Trim();
             if (IsNullOrWhite(name)) return Results.BadRequest(new { error = "Name requerido." });
+            // Solo letras (incluye acentos/ñ) y espacios
+            var rx = new Regex("^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$");
+            if (!rx.IsMatch(name)) return Results.BadRequest(new { error = "Nombre inválido. Solo letras y espacios." });
 
             try
             {
@@ -311,8 +350,8 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             
             var quarterMs = body.QuarterMs ?? 720000; // Default 12 min
             
-            // Validate quarter duration (5min=300000ms, 10min=600000ms, 12min=720000ms)
-            if (quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
+            // Validate quarter duration (30s=30000ms, 5min=300000ms, 10min=600000ms, 12min=720000ms)
+            if (quarterMs != 30000 && quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
                 quarterMs = 720000;
 
             using var c = Open(cs());

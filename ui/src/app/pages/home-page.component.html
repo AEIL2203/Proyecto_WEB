@@ -59,6 +59,7 @@
             <div class="field" style="flex:1; min-width:180px;">
               <label>Duración del cuarto</label>
               <select [(ngModel)]="selectedQuarterMs" class="select">
+                <option [value]="30000">30 segundos</option>
                 <option [value]="300000">5 minutos</option>
                 <option [value]="600000">10 minutos</option>
                 <option [value]="720000">12 minutos</option>
@@ -95,7 +96,7 @@
       </div>
     </div>
 
-        <!-- Crear equipo -->
+    <!-- Crear equipo -->
     <div class="card p-3">
       <div class="card-header" style="display:block; text-align:center;">
         <div class="card-title">Crear equipo</div>
@@ -104,11 +105,15 @@
         <div class="field" style="flex:1; min-width:260px;">
           <label>Nombre del equipo</label>
           <input [(ngModel)]="newTeamName" placeholder="Ej. Los halcones" class="input" />
+          <div class="text-xs" style="margin-top:4px;">
+            * Solo letras y espacios.
+            <span *ngIf="newTeamName.trim() && !isTeamNameValid(newTeamName)" style="color:#f87171;">Nombre inválido.</span>
+          </div>
         </div>
       </div>
       <div style="display:flex; justify-content:center; width:100%; margin-bottom: 8px;">
         <button class="btn btn-success"
-                [disabled]="creating || !newTeamName.trim()"
+                [disabled]="creating || !isTeamNameValid(newTeamName)"
                 (click)="createTeam()"
                 style="min-width: 200px;">
           {{ creating ? 'Creando…' : 'Crear equipo' }}

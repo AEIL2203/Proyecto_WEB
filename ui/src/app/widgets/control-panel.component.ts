@@ -50,6 +50,38 @@ export class ControlPanelComponent implements OnChanges {
 
   disabledScore() { return this.game?.status !== 'IN_PROGRESS'; }
 
+  canAdvance(): boolean {
+    if (!this.game || this.game.status !== 'IN_PROGRESS') return false;
+    
+    // Quarters 1-3: always can advance
+    if (this.game.quarter < 4) return true;
+    
+    // Quarter 4+: only if tied (forces overtime)
+    return this.game.homeScore === this.game.awayScore;
+  }
+
+  getAdvanceButtonText(): string {
+    if (!this.game) return 'Advance';
+    
+    if (this.game.quarter < 4) {
+      return `Q${this.game.quarter + 1}`;
+    } else {
+      const overtimeNum = this.game.quarter - 3;
+      return `OT${overtimeNum}`;
+    }
+  }
+
+  getQuarterText(): string {
+    if (!this.game) return 'Q1';
+    
+    if (this.game.quarter <= 4) {
+      return `Q${this.game.quarter}`;
+    } else {
+      const overtimeNum = this.game.quarter - 4;
+      return `OT${overtimeNum}`;
+    }
+  }
+
   start()   { this.api.start(this.game.gameId).subscribe(() => this.refresh()); }
   advance() { 
     this.api.advance(this.game.gameId).subscribe(() => { 
