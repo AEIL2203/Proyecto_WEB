@@ -1,6 +1,7 @@
 using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using System.Text.RegularExpressions;
 
 public static class GameEndpoints
 {
@@ -329,6 +330,9 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
         {
             var name = (body?.Name ?? "").Trim();
             if (IsNullOrWhite(name)) return Results.BadRequest(new { error = "Name requerido." });
+            // Solo letras (incluye acentos/ñ) y espacios
+            var rx = new Regex("^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$");
+            if (!rx.IsMatch(name)) return Results.BadRequest(new { error = "Nombre inválido. Solo letras y espacios." });
 
             try
             {
