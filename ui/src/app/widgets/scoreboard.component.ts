@@ -117,4 +117,19 @@ export class ScoreboardComponent implements OnInit, OnDestroy, OnChanges {
       .filter(f => f.playerId === playerId && f.quarter === currentQuarter)
       .reduce((total, f) => total + f.fouls, 0);
   }
+
+  // Get total team fouls for current quarter
+  getTeamFouls(team: 'HOME' | 'AWAY'): number {
+    const currentQuarter = this.game.quarter;
+    return this.foulSummary.team
+      .filter(f => f.team === team && f.quarter === currentQuarter)
+      .reduce((total, f) => total + f.fouls, 0);
+  }
+
+  // Get total team fouls for entire game
+  getTotalTeamFouls(team: 'HOME' | 'AWAY'): number {
+    return this.foulSummary.team
+      .filter(f => f.team === team)
+      .reduce((total, f) => total + f.fouls, 0);
+  }
 }
