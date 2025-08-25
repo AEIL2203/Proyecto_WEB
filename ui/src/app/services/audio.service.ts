@@ -4,7 +4,8 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class AudioService {
-  private audio: HTMLAudioElement | null = null;
+  private whistleAudio: HTMLAudioElement | null = null;
+  private scoreAudio: HTMLAudioElement | null = null;
   private isEnabled = true;
 
   constructor() {
@@ -14,10 +15,15 @@ export class AudioService {
 
   private preloadAudio(): void {
     try {
-      this.audio = new Audio();
-      this.audio.src = '/assets/sounds/whistle.mp3';
-      this.audio.preload = 'auto';
-      this.audio.volume = 0.7; // Volumen al 70%
+      this.whistleAudio = new Audio();
+      this.whistleAudio.src = '/assets/sounds/whistle.mp3';
+      this.whistleAudio.preload = 'auto';
+      this.whistleAudio.volume = 0.7; // Volumen al 70%
+
+      this.scoreAudio = new Audio();
+      this.scoreAudio.src = '/assets/sounds/score.mp3';
+      this.scoreAudio.preload = 'auto';
+      this.scoreAudio.volume = 0.6;
     } catch (error) {
       console.warn('No se pudo precargar el audio de silbato:', error);
     }
@@ -27,15 +33,15 @@ export class AudioService {
    * Reproduce el sonido de silbato para fin de cuarto
    */
   playQuarterEndWhistle(): void {
-    if (!this.isEnabled || !this.audio) {
+    if (!this.isEnabled || !this.whistleAudio) {
       return;
     }
 
     try {
       // Reiniciar el audio si ya se está reproduciendo
-      this.audio.currentTime = 0;
+      this.whistleAudio.currentTime = 0;
       
-      const playPromise = this.audio.play();
+      const playPromise = this.whistleAudio.play();
       
       // Manejar navegadores que requieren interacción del usuario
       if (playPromise !== undefined) {
@@ -48,6 +54,34 @@ export class AudioService {
     } catch (error) {
       console.warn('Error al reproducir silbato:', error);
     }
+  }
+
+  /**
+   * Reproduce sonido de anotación
+   */
+  playScore(): void {
+    if (!this.isEnabled || !this.scoreAudio) return;
+    try {
+      this.scoreAudio.currentTime = 0;
+      const p = this.scoreAudio.play();
+      if (p) p.catch(() => this.enableAudioOnNextInteraction());
+    } catch {}
+  }
+
+  /**
+   * Reproduce sonido para inicio de tiempo extra (reutiliza silbato)
+   */
+  playOvertimeStart(): void {
+    this.playQuarterEndWhistle();
+  }
+
+  /**
+   * Reproduce sonido al finalizar el partido (reutiliza silbato + score suave)
+   */
+  playGameEnd(): void {
+    this.playQuarterEndWhistle();
+    // Pequeño retardo para encadenar el score como confirmación
+    setTimeout(() => this.playScore(), 250);
   }
 
   /**
@@ -69,13 +103,19 @@ export class AudioService {
    */
   private enableAudioOnNextInteraction(): void {
     const enableAudio = () => {
-      if (this.audio) {
-        this.audio.play().then(() => {
-          this.audio!.pause();
-          this.audio!.currentTime = 0;
+      if (this.whistleAudio) {
+        this.whistleAudio.play().then(() => {
+          this.whistleAudio!.pause();
+          this.whistleAudio!.currentTime = 0;
         }).catch(() => {
           // Silenciar errores de autoplay
         });
+      }
+      if (this.scoreAudio) {
+        this.scoreAudio.play().then(() => {
+          this.scoreAudio!.pause();
+          this.scoreAudio!.currentTime = 0;
+        }).catch(() => {});
       }
       
       // Remover listeners después del primer uso

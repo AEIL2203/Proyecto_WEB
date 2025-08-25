@@ -13,7 +13,7 @@
   </div>
 
   <!-- HOME -->
-  <div class="card-subsection">
+  <div class="card-subsection my-md">
     <div class="section-title">HOME</div>
     <div class="input-group" style="align-items:center;">
       <button class="btn btn-primary" (click)="score('HOME',1)" [disabled]="game.status!=='IN_PROGRESS'">+1</button>
@@ -24,11 +24,11 @@
       <select [(ngModel)]="selHomePlayerId" class="select" [disabled]="!homePlayers.length">
         <option [ngValue]="undefined">Jugador HOME (opcional)</option>
         <option *ngFor="let p of homePlayers" [ngValue]="p.playerId">
-          {{ p.number ? ('#'+p.number+' ') : '' }}{{ p.name }}
+          {{ p.number ? ('#'+p.number+' ') : '' }}{{ p.name }}{{ isPlayerOut(p) ? ' (OUT)' : '' }}
         </option>
       </select>
 
-      <button class="btn btn-primary" (click)="foul('HOME')" [disabled]="game.status!=='IN_PROGRESS'">+Foul</button>
+      <button class="btn btn-primary" (click)="foul('HOME')" [disabled]="game.status!=='IN_PROGRESS' || isSelectedPlayerOut('HOME')">+Foul</button>
       <button class="btn btn-ghost" (click)="removeFoul('HOME')" [disabled]="game.status!=='IN_PROGRESS' || teamFouls.home === 0">-Foul</button>
     </div>
     <div class="muted text-sm" [class.text-red-600]="teamFouls.home >= 5">
@@ -48,11 +48,11 @@
       <select [(ngModel)]="selAwayPlayerId" class="select" [disabled]="!awayPlayers.length">
         <option [ngValue]="undefined">Jugador AWAY (opcional)</option>
         <option *ngFor="let p of awayPlayers" [ngValue]="p.playerId">
-          {{ p.number ? ('#'+p.number+' ') : '' }}{{ p.name }}
+          {{ p.number ? ('#'+p.number+' ') : '' }}{{ p.name }}{{ isPlayerOut(p) ? ' (OUT)' : '' }}
         </option>
       </select>
 
-      <button class="btn btn-primary" (click)="foul('AWAY')" [disabled]="game.status!=='IN_PROGRESS'">+Foul</button>
+      <button class="btn btn-primary" (click)="foul('AWAY')" [disabled]="game.status!=='IN_PROGRESS' || isSelectedPlayerOut('AWAY')">+Foul</button>
       <button class="btn btn-ghost" (click)="removeFoul('AWAY')" [disabled]="game.status!=='IN_PROGRESS' || teamFouls.away === 0">-Foul</button>
     </div>
     <div class="muted text-sm" [class.text-red-600]="teamFouls.away >= 5">
