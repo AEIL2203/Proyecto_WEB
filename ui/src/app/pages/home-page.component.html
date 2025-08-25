@@ -2,8 +2,8 @@
   <!-- Hero y búsqueda -->
   <div class="container stack">
     <header class="hero">
-      <h1>Marcador de Baloncesto</h1>
-      <p class="muted">Administra partidos, equipos y plantillas</p>
+      <h1>Gestión de partidos de Baloncesto</h1>
+      <p class="muted">Hecho por Grupo #9</p>
     </header>
   </div>
 
@@ -39,20 +39,20 @@
 
       <!-- Crear partido emparejando por IDs -->
       <div class="mt-4 pt-3">
-        <div class="font-semibold mb-2" style="text-align:center;">Crear/Emparejar partido</div>
+        <div class="font-semibold mb-2" style="text-align:center;">Crear enfrentamiento</div>
         <div style="display:flex; justify-content:center; width:100%;">
           <div class="input-group" style="width:100%; max-width:640px; margin-bottom:10px;">
             <div class="field" style="flex:1; min-width:220px;">
-              <label>Local</label>
+              <label>Equipo local</label>
               <select #homeSel class="select">
-                <option [value]="0">HomeTeamId…</option>
+                <option [value]="0">Locales</option>
                 <option *ngFor="let t of teams" [value]="t.teamId">{{ t.name }}</option>
               </select>
             </div>
             <div class="field" style="flex:1; min-width:220px;">
-              <label>Visita</label>
+              <label>Equipo visitante</label>
               <select #awaySel class="select">
-                <option [value]="0">AwayTeamId…</option>
+                <option [value]="0">Visitantes</option>
                 <option *ngFor="let t of teams" [value]="t.teamId">{{ t.name }}</option>
               </select>
             </div>

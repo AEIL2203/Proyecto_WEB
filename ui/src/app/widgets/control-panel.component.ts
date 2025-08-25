@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Game } from '../services/api.service';
+import { AudioService } from '../services/audio.service';
 
 @Component({
   selector: 'app-control-panel',
@@ -24,7 +25,7 @@ export class ControlPanelComponent implements OnChanges {
   // Conteo de faltas del cuarto actual
   teamFouls = { home: 0, away: 0 };
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private audio: AudioService) {}
 
   ngOnChanges(ch: SimpleChanges) {
     if (!this.game) return;
@@ -50,7 +51,14 @@ export class ControlPanelComponent implements OnChanges {
   disabledScore() { return this.game?.status !== 'IN_PROGRESS'; }
 
   start()   { this.api.start(this.game.gameId).subscribe(() => this.refresh()); }
-  advance() { this.api.advance(this.game.gameId).subscribe(() => { this.refresh(); this.refreshFouls(); }); }
+  advance() { 
+    this.api.advance(this.game.gameId).subscribe(() => { 
+      this.refresh(); 
+      this.refreshFouls(); 
+      // Reproducir silbato al avanzar de cuarto
+      this.audio.playQuarterEndWhistle();
+    }); 
+  }
   finish()  { this.api.finish(this.game.gameId).subscribe(() => { this.refresh(); this.refreshFouls(); }); }
   undo()    { this.api.undo(this.game.gameId).subscribe(() => { this.refresh(); this.refreshFouls(); }); }
 

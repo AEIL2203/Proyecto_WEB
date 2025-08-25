@@ -4,6 +4,7 @@ import { Observable, map } from 'rxjs';
 import { ClockService, ClockState } from '../services/clock.service';
 import { interval, Subscription } from 'rxjs';
 import { ApiService, FoulSummary } from '../services/api.service';
+import { AudioService } from '../services/audio.service';
 
 @Pipe({ name: 'msToClock', standalone: true })
 export class MsToClockPipe implements PipeTransform {
@@ -44,7 +45,7 @@ export class ClockComponent implements OnChanges, OnDestroy {
   busy = false;
   private foulsSub?: Subscription; 
 
-  constructor(private clock: ClockService, private api: ApiService) {}
+  constructor(private clock: ClockService, private api: ApiService, private audio: AudioService) {}
 
   ngOnChanges(ch: SimpleChanges): void {
     if (!this.gameId) return;
@@ -55,7 +56,11 @@ export class ClockComponent implements OnChanges, OnDestroy {
       this.prevRunning = false;
       this.vm$ = this.clock.state$(this.gameId).pipe(
         map(s => {
-          if (this.prevRunning && this.prevRemaining > 0 && s.remainingMs === 0) this.expired.emit();
+          if (this.prevRunning && this.prevRemaining > 0 && s.remainingMs === 0) {
+            this.expired.emit();
+            // Reproducir silbato cuando el reloj llega a cero
+            this.audio.playQuarterEndWhistle();
+          }
           this.vmSnap = s;
           this.prevRunning = !!s.running;
           this.prevRemaining = s.remainingMs;

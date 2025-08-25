@@ -13,10 +13,6 @@
         <div class="team-label">HOME</div>
         <div class="team-name">{{ game.homeTeam }}</div>
         <div class="team-score">{{ game.homeScore.toString().padStart(3, '0') }}</div>
-        <div class="team-fouls">
-          <div class="fouls-label">FOULS</div>
-          <div class="fouls-value">{{ getTotalTeamFouls('HOME') }}</div>
-        </div>
       </div>
       
       <!-- Center Info Section -->
@@ -42,10 +38,6 @@
         <div class="team-label">VISITOR</div>
         <div class="team-name">{{ game.awayTeam }}</div>
         <div class="team-score">{{ game.awayScore.toString().padStart(3, '0') }}</div>
-        <div class="team-fouls">
-          <div class="fouls-label">FOULS</div>
-          <div class="fouls-value">{{ getTotalTeamFouls('AWAY') }}</div>
-        </div>
       </div>
     </div>
     
