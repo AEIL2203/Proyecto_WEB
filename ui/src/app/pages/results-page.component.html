@@ -113,7 +113,6 @@
         <!-- Plantilla HOME -->
         <div class="card p-3">
           <div class="card-header" style="display:flex; align-items:center; justify-content:space-between;">
-            <div class="card-title">Plantilla HOME</div>
             <span *ngIf="(foulSummary?.team | isBonus:'HOME':d.game.quarter)" class="ml-2 px-2 py-0.5 bg-red-600 text-white rounded text-xs">BONUS</span>
           </div>
           <table class="w-full text-sm" style="border-collapse:separate; border-spacing:0 6px;">
@@ -151,7 +150,6 @@
         <!-- Plantilla AWAY -->
         <div class="card p-3 my-md">
           <div class="card-header" style="display:flex; align-items:center; justify-content:space-between;">
-            <div class="card-title">Plantilla AWAY</div>
             <span *ngIf="(foulSummary?.team | isBonus:'AWAY':d.game.quarter)" class="ml-2 px-2 py-0.5 bg-red-600 text-white rounded text-xs">BONUS</span>
           </div>
           <table class="w-full text-sm" style="border-collapse:separate; border-spacing:0 6px;">

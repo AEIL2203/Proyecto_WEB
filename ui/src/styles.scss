@@ -1,5 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
 
+/* ===== Reset & base ===== */
+*, *::before, *::after { box-sizing: border-box; }
+
 /* ===== Theme palette ===== */
 :root {
   --bg: #0f172a;            /* slate-900 */
@@ -24,6 +27,7 @@ html, body {
   background: radial-gradient(1200px 800px at 10% 10%, #0b1220, var(--bg)),
               linear-gradient(180deg, #0b1220, #0a0f1d);
   color: var(--text);
+  overflow-x: hidden; /* evita scroll lateral accidental */
 }
 
 /* ===== Cards / containers ===== */
@@ -33,6 +37,7 @@ html, body {
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  max-width: 100%;
 }
 .card:hover {
   transform: translateY(-2px);
@@ -85,6 +90,12 @@ html, body {
 .input-group .input, .input-group .select { min-width: 220px; }
 .input-group .btn { white-space: nowrap; }
 
+/* Relax rigid widths on very narrow screens */
+@media (max-width: 420px) {
+  .input-group .input, .input-group .select { min-width: 140px; }
+  .btn { max-width: 100%; }
+}
+
 /* ===== Buttons ===== */
 .btn {
   position: relative;
@@ -126,9 +137,13 @@ html, body {
 .my-lg { margin-block: 1.25rem; }
 .row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
 .center { display: grid; justify-items: center; }
-.container { width: 100%; max-width: 1100px; margin-inline: auto; padding-inline: 1rem; }
+.container { width: 100%; max-width: min(1100px, 100%); margin-inline: auto; padding-inline: 1rem; }
 .grid-2 { display: grid; gap: 1rem; grid-template-columns: 1fr; }
 @media (min-width: 960px) { .grid-2 { grid-template-columns: 1fr 1fr; } }
+
+/* Media elements & text wrapping */
+img, svg, video { max-width: 100%; height: auto; }
+a { overflow-wrap: anywhere; word-break: break-word; }
 
 /* Lists */
 .list-clean { list-style: none; padding: 0; margin: 0; }
