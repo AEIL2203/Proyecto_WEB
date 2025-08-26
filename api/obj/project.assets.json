@@ -2175,11 +2175,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\angel\\Downloads\\Marcador-de-baloncesto\\Basket_Control\\api\\Api.csproj",
+      "projectUniqueName": "C:\\Users\\angel\\OneDrive\\Documentos\\GitHub\\Proyecto_WEB\\api\\Api.csproj",
       "projectName": "Api",
-      "projectPath": "C:\\Users\\angel\\Downloads\\Marcador-de-baloncesto\\Basket_Control\\api\\Api.csproj",
+      "projectPath": "C:\\Users\\angel\\OneDrive\\Documentos\\GitHub\\Proyecto_WEB\\api\\Api.csproj",
       "packagesPath": "C:\\Users\\angel\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\angel\\Downloads\\Marcador-de-baloncesto\\Basket_Control\\api\\obj\\",
+      "outputPath": "C:\\Users\\angel\\OneDrive\\Documentos\\GitHub\\Proyecto_WEB\\api\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\angel\\AppData\\Roaming\\NuGet\\NuGet.Config"
