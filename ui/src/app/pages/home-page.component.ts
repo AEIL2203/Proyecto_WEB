@@ -70,7 +70,11 @@ export class HomePageComponent {
   }
 
   createGame(homeTeamId: number, awayTeamId: number) {
-    if (!homeTeamId || !awayTeamId || homeTeamId === awayTeamId) return;
+    if (!homeTeamId || !awayTeamId) return;
+    if (homeTeamId === awayTeamId) {
+      this.notifications.showWarning('No se puede jugar con el mismo equipo.');
+      return;
+    }
     this.creating = true;
     
     // Obtener nombres de los equipos para la notificación

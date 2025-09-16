@@ -1,4 +1,4 @@
-<div class="card p-3">
+<div class="card p-3" style="width:100%; max-width:100%; box-sizing:border-box;">
   <div class="card-header" style="display:block; text-align:center;">
     <div class="card-title" style="margin-bottom:4px;">Controles</div>
     <div class="card-subtitle" style="display:block;">Gestiona el juego y registra eventos</div>
@@ -12,51 +12,80 @@
     <button class="btn btn-ghost"  (click)="undo()"    [disabled]="!game">Undo</button>
   </div>
 
+  <!-- Bloques HOME / AWAY en grid responsivo -->
+  <div style="display:grid; gap:12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); align-items:stretch;">
   <!-- HOME -->
-  <div class="card-subsection">
-    <div class="section-title">HOME</div>
-    <div class="input-group" style="align-items:center;">
-      <button class="btn btn-primary" (click)="score('HOME',1)" [disabled]="game.status!=='IN_PROGRESS'">+1</button>
-      <button class="btn btn-primary" (click)="score('HOME',2)" [disabled]="game.status!=='IN_PROGRESS'">+2</button>
-      <button class="btn btn-primary" (click)="score('HOME',3)" [disabled]="game.status!=='IN_PROGRESS'">+3</button>
-      <button class="btn btn-ghost" (click)="removeScore('HOME')" [disabled]="game.status!=='IN_PROGRESS' || game.homeScore === 0">-Pts</button>
-
-      <select [(ngModel)]="selHomePlayerId" class="select" [disabled]="!homePlayers.length">
-        <option [ngValue]="undefined">Jugador HOME (opcional)</option>
-        <option *ngFor="let p of homePlayers" [ngValue]="p.playerId">
-          {{ p.number ? ('#'+p.number+' ') : '' }}{{ p.name }}
-        </option>
-      </select>
-
-      <button class="btn btn-primary" (click)="foul('HOME')" [disabled]="game.status!=='IN_PROGRESS'">+Foul</button>
-      <button class="btn btn-ghost" (click)="removeFoul('HOME')" [disabled]="game.status!=='IN_PROGRESS' || teamFouls.home === 0">-Foul</button>
-    </div>
-    <div class="muted text-sm" [class.text-red-600]="teamFouls.home >= 5">
-      Faltas HOME (Q{{game.quarter}}): {{ teamFouls.home }} {{ teamFouls.home >= 5 ? '(Penalización)' : '' }}
+  <div class="card-subsection my-md">
+    <div class="card p-3" style="background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); height:100%; display:flex; flex-direction:column;">
+      <div class="card-header" style="display:block; margin-bottom:.5rem;">
+        <div class="card-title">HOME</div>
+        <div class="card-subtitle">Anotar, seleccionar jugador y registrar faltas</div>
+      </div>
+      <div class="input-group" style="align-items:stretch; width:100%; flex:1 1 auto;">
+        <!-- fila puntos -->
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+          <button class="btn btn-primary" (click)="score('HOME',1)" [disabled]="game.status!=='IN_PROGRESS'">+1</button>
+          <button class="btn btn-primary" (click)="score('HOME',2)" [disabled]="game.status!=='IN_PROGRESS'">+2</button>
+          <button class="btn btn-primary" (click)="score('HOME',3)" [disabled]="game.status!=='IN_PROGRESS'">+3</button>
+          <button class="btn btn-ghost" (click)="removeScore('HOME')" [disabled]="game.status!=='IN_PROGRESS' || game.homeScore === 0">-Pts</button>
+        </div>
+        <!-- fila select -->
+        <div style="display:flex; width:100%; margin-bottom:8px;">
+          <select [(ngModel)]="selHomePlayerId" class="select" [disabled]="!homePlayers.length" 
+                  style="flex:1 1 100%; min-width:0; width:100%;">
+            <option [ngValue]="undefined">Jugador HOME (opcional)</option>
+            <option *ngFor="let p of homePlayers" [ngValue]="p.playerId">
+              {{ p.number ? ('#'+p.number+' ') : '' }}{{ p.name }}{{ isPlayerOut(p) ? ' (OUT)' : '' }}
+            </option>
+          </select>
+        </div>
+        <!-- fila faltas -->
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:6px;">
+          <button class="btn btn-primary" (click)="foul('HOME')" [disabled]="game.status!=='IN_PROGRESS' || isSelectedPlayerOut('HOME')">+Foul</button>
+          <button class="btn btn-ghost" (click)="removeFoul('HOME')" [disabled]="game.status!=='IN_PROGRESS' || teamFouls.home === 0">-Foul</button>
+        </div>
+        <div class="muted text-sm" [class.text-red-600]="teamFouls.home >= 5" style="margin-top:2px;">
+          Faltas HOME (Q{{game.quarter}}): {{ teamFouls.home }} {{ teamFouls.home >= 5 ? '(Penalización)' : '' }}
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- AWAY -->
-  <div class="card-subsection">
-    <div class="section-title">AWAY</div>
-    <div class="input-group" style="align-items:center;">
-      <button class="btn btn-primary" (click)="score('AWAY',1)" [disabled]="game.status!=='IN_PROGRESS'">+1</button>
-      <button class="btn btn-primary" (click)="score('AWAY',2)" [disabled]="game.status!=='IN_PROGRESS'">+2</button>
-      <button class="btn btn-primary" (click)="score('AWAY',3)" [disabled]="game.status!=='IN_PROGRESS'">+3</button>
-      <button class="btn btn-ghost" (click)="removeScore('AWAY')" [disabled]="game.status!=='IN_PROGRESS' || game.awayScore === 0">-Pts</button>
-
-      <select [(ngModel)]="selAwayPlayerId" class="select" [disabled]="!awayPlayers.length">
-        <option [ngValue]="undefined">Jugador AWAY (opcional)</option>
-        <option *ngFor="let p of awayPlayers" [ngValue]="p.playerId">
-          {{ p.number ? ('#'+p.number+' ') : '' }}{{ p.name }}
-        </option>
-      </select>
-
-      <button class="btn btn-primary" (click)="foul('AWAY')" [disabled]="game.status!=='IN_PROGRESS'">+Foul</button>
-      <button class="btn btn-ghost" (click)="removeFoul('AWAY')" [disabled]="game.status!=='IN_PROGRESS' || teamFouls.away === 0">-Foul</button>
+  <div class="card-subsection my-md">
+    <div class="card p-3" style="background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); height:100%; display:flex; flex-direction:column;">
+      <div class="card-header" style="display:block; margin-bottom:.5rem;">
+        <div class="card-title">AWAY</div>
+        <div class="card-subtitle">Anotar, seleccionar jugador y registrar faltas</div>
+      </div>
+      <div class="input-group" style="align-items:stretch; width:100%; flex:1 1 auto;">
+        <!-- fila puntos -->
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
+          <button class="btn btn-primary" (click)="score('AWAY',1)" [disabled]="game.status!=='IN_PROGRESS'">+1</button>
+          <button class="btn btn-primary" (click)="score('AWAY',2)" [disabled]="game.status!=='IN_PROGRESS'">+2</button>
+          <button class="btn btn-primary" (click)="score('AWAY',3)" [disabled]="game.status!=='IN_PROGRESS'">+3</button>
+          <button class="btn btn-ghost" (click)="removeScore('AWAY')" [disabled]="game.status!=='IN_PROGRESS' || game.awayScore === 0">-Pts</button>
+        </div>
+        <!-- fila select -->
+        <div style="display:flex; width:100%; margin-bottom:8px;">
+          <select [(ngModel)]="selAwayPlayerId" class="select" [disabled]="!awayPlayers.length"
+                  style="flex:1 1 100%; min-width:0; width:100%;">
+            <option [ngValue]="undefined">Jugador AWAY (opcional)</option>
+            <option *ngFor="let p of awayPlayers" [ngValue]="p.playerId">
+              {{ p.number ? ('#'+p.number+' ') : '' }}{{ p.name }}{{ isPlayerOut(p) ? ' (OUT)' : '' }}
+            </option>
+          </select>
+        </div>
+        <!-- fila faltas -->
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:6px;">
+          <button class="btn btn-primary" (click)="foul('AWAY')" [disabled]="game.status!=='IN_PROGRESS' || isSelectedPlayerOut('AWAY')">+Foul</button>
+          <button class="btn btn-ghost" (click)="removeFoul('AWAY')" [disabled]="game.status!=='IN_PROGRESS' || teamFouls.away === 0">-Foul</button>
+        </div>
+        <div class="muted text-sm" [class.text-red-600]="teamFouls.away >= 5" style="margin-top:2px;">
+          Faltas AWAY (Q{{game.quarter}}): {{ teamFouls.away }} {{ teamFouls.away >= 5 ? '(Penalización)' : '' }}
+        </div>
+      </div>
     </div>
-    <div class="muted text-sm" [class.text-red-600]="teamFouls.away >= 5">
-      Faltas AWAY (Q{{game.quarter}}): {{ teamFouls.away }} {{ teamFouls.away >= 5 ? '(Penalización)' : '' }}
-    </div>
+  </div>
   </div>
 </div>
