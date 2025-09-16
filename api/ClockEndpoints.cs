@@ -4,15 +4,17 @@ using Microsoft.Data.SqlClient;
 
 public static class ClockEndpoints
 {
-    // Rutas de reloj de juego. Implementación alternativa para diferenciar el estilo
-    // respecto a una versión que hacía más cálculo en SQL.
+    // ENDPOINTS QUE SE RELACIONAN CON EL RELOJ DEL PARTIDO
+    // ES DONDE MANIPULAMOS EL CRONOMETRO DEL PARTIDO
+    // PONIENDO LA LÓGICA EN C# EN LUGAR DE SQL
 
     public static void MapClockEndpoints(this WebApplication app, Func<string> cs)
     {
-        // Helper para ejecutar comandos DML
+        // AYUDA A MEJORAR LA ESCRITURA A LA BASE DE DATOS
         static Task<int> Exec(SqlConnection c, string sql, object p) => c.ExecuteAsync(sql, p);
 
-        // GET estado (remaining ahora se calcula en C# para diferenciar la lógica)
+        // ENDPOINT PARA EXTRAER EL ESTADO ACTUAL DEL RELOJ
+
         app.MapGet("/api/games/{id:int}/clock", async (int id) =>
         {
             using var c = new SqlConnection(cs());
@@ -21,25 +23,30 @@ public static class ClockEndpoints
                 FROM [HoopsDB].[core].[MatchTimers]
                 WHERE GameId = @id;", new { id });
 
+        // SI NO HAY DATOS EN LA BD DEVOLVEMOS UN ERROR 404
             if (row is null) return Results.NotFound();
 
-            // Extrae con tolerancia de tipos
+            // AQUI CONVERTIMOS LOS DATOS EXTRAIDOS DE LA BD EN UNA CONVERSION MAS SEGURA
+            // ASI NO TENEMOS ERRORES SI NOS DAN TIPOS DE DATOS DISTINTOS
             int gameId = (int)row.GameId;
             byte quarter = (byte)row.Quarter;
             int quarterMs = (int)row.QuarterMs;
             int remainingMsDb = (int)row.RemainingMs;
-            // Running puede venir como BIT/bool o tinyint -> normalizamos a int
+            // VARIABLE PARA REALIZAR CÁLCULOS PARA EL TIEMPO
             int runningInt = row.Running is bool br ? (br ? 1 : 0) : Convert.ToInt32(row.Running);
+
+            //CAMPOS DE FECHA Y HORA QUE OBTUVIMOS DE LA BD
             DateTime? startedAt = row.StartedAt as DateTime?;
             DateTime updatedAt = (DateTime)row.UpdatedAt;
 
-            // Cálculo local del tiempo restante si está corriendo
+            // DESDE C# CALCULAMOS EL TIEMPO RESTANTE DEL RELOJ
             var nowUtc = DateTime.UtcNow;
             var baseRemaining = remainingMsDb;
             var isRunning = runningInt != 0 && baseRemaining > 0;
             if (isRunning && startedAt.HasValue)
-            {
+            {   //MILISEGUNDO QUE HAN PASADO DESDE QUE ESTÁ EN CURSO
                 var elapsed = (int)(nowUtc - startedAt.Value).TotalMilliseconds;
+                //AQUI AJUSTAMOS EL TIEMPO PARA QUE NO BAJE DE 0
                 if (elapsed > 0)
                 {
                     baseRemaining = Math.Max(0, baseRemaining - elapsed);
@@ -57,7 +64,10 @@ public static class ClockEndpoints
             });
         }).WithOpenApi();
 
-        // POST start (idempotente)
+        @SUMMARY Inicia el reloj del partido. Si el temporizador no existe, se crea con una duración por defecto de 12 minutos (720000 ms). Si el temporizador ya está en cero, se restablece a la duración del cuarto antes de iniciarlo.
+        @PARAM id El ID del partido.
+        @RESPONSE 204 El temporizador se inició correctamente.
+
         app.MapPost("/api/games/{id:int}/clock/start", async (int id) =>
         {
             using var c = new SqlConnection(cs());
