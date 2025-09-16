@@ -57,13 +57,9 @@ public static class ClockEndpoints
             });
         }).WithOpenApi();
 
-<<<<<<< Updated upstream
-        // POST start (idempotente)
-=======
         // POST start - Inicia el reloj del partido
         // Si el temporizador no existe, se crea con una duración por defecto de 12 minutos (720000 ms)
         // Si el temporizador ya está en cero, se restablece a la duración del cuarto antes de iniciarlo
->>>>>>> Stashed changes
         app.MapPost("/api/games/{id:int}/clock/start", async (int id) =>
         {
             using var c = new SqlConnection(cs());
