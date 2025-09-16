@@ -4,10 +4,14 @@ using Microsoft.Data.SqlClient;
 
 public static class ClockEndpoints
 {
-    // ENDPOINTS QUE SE RELACIONAN CON EL RELOJ DEL PARTIDO
-    // ES DONDE MANIPULAMOS EL CRONOMETRO DEL PARTIDO
-    // PONIENDO LA LÓGICA EN C# EN LUGAR DE SQL
 
+    /*
+   * @summary Maneja el cronómetro del partido.
+   * Conjunto de endpoints que administran el reloj del partido.
+   * Permiten consultar, iniciar, pausar y reiniciar el cronómetro,
+   * delegando el cálculo del tiempo restante a la lógica en C#
+   * en lugar de la base de datos.
+   */
     public static void MapClockEndpoints(this WebApplication app, Func<string> cs)
     {
         // AYUDA A MEJORAR LA ESCRITURA A LA BASE DE DATOS
@@ -63,10 +67,6 @@ public static class ClockEndpoints
                 updatedAt
             });
         }).WithOpenApi();
-
-        @SUMMARY Inicia el reloj del partido. Si el temporizador no existe, se crea con una duración por defecto de 12 minutos (720000 ms). Si el temporizador ya está en cero, se restablece a la duración del cuarto antes de iniciarlo.
-        @PARAM id El ID del partido.
-        @RESPONSE 204 El temporizador se inició correctamente.
 
         app.MapPost("/api/games/{id:int}/clock/start", async (int id) =>
         {
