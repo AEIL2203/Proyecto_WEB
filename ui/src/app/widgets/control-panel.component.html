@@ -10,6 +10,7 @@
     <button class="btn btn-primary" (click)="advance()" [disabled]="!canAdvance()">{{getAdvanceButtonText()}}</button>
     <button class="btn btn-primary" (click)="finish()"  [disabled]="game.status!=='IN_PROGRESS'">Finish</button>
     <button class="btn btn-ghost"  (click)="undo()"    [disabled]="!game">Undo</button>
+    <button class="btn btn-ghost" (click)="resetQuarter()" [disabled]="!game">Reiniciar cuarto</button>
   </div>
 
   <!-- Bloques HOME / AWAY en grid responsivo -->

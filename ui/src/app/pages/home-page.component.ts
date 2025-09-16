@@ -7,7 +7,6 @@ import { ApiService, Game, GameDetail, Team } from '../services/api.service';
 import { NotificationService } from '../services/notification.service';
 import { ScoreboardComponent } from '../widgets/scoreboard.component';
 import { ControlPanelComponent } from '../widgets/control-panel.component';
-import { ClockComponent } from '../widgets/clock.component';
 import { TeamRosterComponent } from '../widgets/team-roster.component';
 
 @Component({
@@ -19,7 +18,6 @@ import { TeamRosterComponent } from '../widgets/team-roster.component';
     RouterModule,
     ScoreboardComponent,
     ControlPanelComponent,
-    ClockComponent,
     TeamRosterComponent,
     AdminTeamRosterComponent,
   ],

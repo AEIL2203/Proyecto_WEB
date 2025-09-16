@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService, Game, Player } from '../services/api.service';
 import { AudioService } from '../services/audio.service';
 import { NotificationService } from '../services/notification.service';
+import { ClockService } from '../services/clock.service';
 
 @Component({
   selector: 'app-control-panel',
@@ -28,7 +29,7 @@ export class ControlPanelComponent implements OnChanges {
   // Conteo de faltas por jugador (total acumulado, por juego)
   private playerFouls = new Map<number, number>();
 
-  constructor(private api: ApiService, private audio: AudioService, private notifications: NotificationService) {}
+  constructor(private api: ApiService, private audio: AudioService, private notifications: NotificationService, private clock: ClockService) {}
 
   ngOnChanges(ch: SimpleChanges) {
     if (!this.game) return;
@@ -194,6 +195,11 @@ export class ControlPanelComponent implements OnChanges {
 
   removeScore(team:'HOME'|'AWAY') {
     this.api.removeScore(this.game.gameId, team).subscribe(() => this.refresh());
+  }
+
+  resetQuarter() {
+    if (!this.game) return;
+    this.clock.resetForNewQuarter(this.game.gameId);
   }
 
   // Helpers de UI
