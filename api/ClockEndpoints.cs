@@ -4,8 +4,9 @@ using Microsoft.Data.SqlClient;
 
 public static class ClockEndpoints
 {
-    // Rutas de reloj de juego. Implementación alternativa para diferenciar el estilo
-    // respecto a una versión que hacía más cálculo en SQL.
+    /// <summary>ENDPOINTS QUE SE RELACIONAN CON EL RELOJ DEL PARTIDO</summary>
+    /// <summary> ES DONDE MANIPULAMOS EL CRONOMETRO DEL PARTIDO</summary>
+    /// <summary> PONIENDO LA LÓGICA EN C# EN LUGAR DE LA BD</summary>
 
     public static void MapClockEndpoints(this WebApplication app, Func<string> cs)
     {
