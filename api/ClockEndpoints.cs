@@ -12,6 +12,7 @@ public static class ClockEndpoints
    * delegando el cálculo del tiempo restante a la lógica en C#
    * en lugar de la base de datos.
    */
+   
     public static void MapClockEndpoints(this WebApplication app, Func<string> cs)
     {
         // AYUDA A MEJORAR LA ESCRITURA A LA BASE DE DATOS

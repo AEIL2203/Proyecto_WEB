@@ -1,23 +1,97 @@
-// Usings mínimos; Program no usa Dapper/SqlClient directamente
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using MarcadorBaloncesto.Services;
+using MarcadorBaloncesto.Middleware;
+using MarcadorBaloncesto.Models;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
-var b = WebApplication.CreateBuilder(args);
-// Swagger y CORS con una política nombrada para diferenciar el estilo
-b.Services.AddEndpointsApiExplorer();
-b.Services.AddSwaggerGen();
-b.Services.AddCors(o => o.AddPolicy("Open", p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+var builder = WebApplication.CreateBuilder(args);
 
-var app = b.Build();
+// Configuración de servicios
+builder.Services.AddControllers();
+
+// Configuración de CORS
+var corsPolicyName = "AllowAngularApp";
+var angularAppUrl = "http://localhost:4200";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: corsPolicyName,
+        policy =>
+        {
+            policy.WithOrigins(angularAppUrl)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
+
+// Configuración de autenticación JWT
+var jwtSecret = builder.Configuration["Jwt:Secret"] ?? 
+    throw new InvalidOperationException("JWT Secret no configurado");
+var key = Encoding.ASCII.GetBytes(jwtSecret);
+
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(x =>
+{
+    x.RequireHttpsMetadata = false;
+    x.SaveToken = true;
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
+// Configuración de autorización
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+});
+
+// Registrar servicios personalizados
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") 
+    ?? builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("No hay cadena de conexión configurada");
+
+builder.Services.AddScoped<IAuthService>(_ => new AuthService(builder.Configuration, connectionString));
+
+var app = builder.Build();
+
+// Configuración del pipeline HTTP
 app.UseCors("Open");
+app.UseRouting();
 
-if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
+// Agregar el middleware JWT
+app.UseMiddleware<JwtMiddleware>();
 
+// Habilitar autenticación y autorización
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Endpoint de salud
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
 // Proveedor de cadena de conexión como delegado reutilizable
 var getCs = ConnectionStringHelper.Build(app);
 
+// Mapear endpoints de la aplicación
 app.MapGameEndpoints(getCs);
 app.MapClockEndpoints(getCs);
+
+// Mapear controladores
+app.MapControllers();
 
 app.Run();
 

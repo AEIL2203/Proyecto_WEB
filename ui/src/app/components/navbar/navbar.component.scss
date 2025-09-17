@@ -1,0 +1,102 @@
+.navbar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  padding: 0.5rem 1rem;
+
+  .navbar-brand {
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #fff;
+    
+    &:hover {
+      color: rgba(255, 255, 255, 0.9);
+    }
+  }
+
+  .navbar-nav {
+    .nav-link {
+      color: rgba(255, 255, 255, 0.85);
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      
+      &:hover, &.active {
+        color: #fff;
+      }
+      
+      i {
+        font-size: 1.1rem;
+        margin-right: 0.3rem;
+      }
+    }
+  }
+
+  .dropdown-menu {
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0;
+    margin-top: 0.5rem;
+    
+    .dropdown-item {
+      padding: 0.5rem 1.5rem;
+      display: flex;
+      align-items: center;
+      transition: all 0.2s;
+      
+      i {
+        margin-right: 0.5rem;
+      }
+      
+      &:hover, &:focus {
+        background-color: #f8f9fa;
+        color: #0d6efd;
+      }
+      
+      &.text-danger:hover {
+        color: #dc3545 !important;
+      }
+    }
+    
+    .dropdown-divider {
+      margin: 0.5rem 0;
+      border-top: 1px solid #eee;
+    }
+  }
+  
+  .badge {
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    text-transform: capitalize;
+  }
+}
+
+/* Estilos responsivos */
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    padding: 1rem 0;
+    margin-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .navbar-nav {
+    margin-top: 0.5rem;
+    
+    .nav-item {
+      margin-bottom: 0.25rem;
+    }
+    
+    .dropdown-menu {
+      box-shadow: none;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      margin: 0.25rem 0 0 1rem;
+      
+      .dropdown-item {
+        padding: 0.5rem 1rem;
+      }
+    }
+  }
+}
