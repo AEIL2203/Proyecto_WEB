@@ -11,6 +11,53 @@ IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'core')
     EXEC('CREATE SCHEMA core');
 GO
 
+/* =========================
+   USERS
+   ========================= */
+IF OBJECT_ID('core.Users') IS NULL
+BEGIN
+    CREATE TABLE core.Users (
+        Id INT IDENTITY(1,1) PRIMARY KEY,
+        Username NVARCHAR(50) NOT NULL UNIQUE,
+        Password NVARCHAR(255) NOT NULL,
+        Role NVARCHAR(20) NOT NULL DEFAULT 'User',
+        CreatedBy INT NULL,
+        CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+        UpdatedBy INT NULL,
+        UpdatedAt DATETIME2 NULL,
+        LastLogin DATETIME2 NULL,
+        IsActive BIT NOT NULL DEFAULT 1,
+        CONSTRAINT FK_Users_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES core.Users(Id),
+        CONSTRAINT FK_Users_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES core.Users(Id)
+    );
+    
+    -- Insert default admin user (password: Admin123!)
+    INSERT INTO core.Users (Username, Password, Role, CreatedBy, CreatedAt, IsActive)
+    VALUES (
+        'admin', 
+        '$2a$11$rLk5vme1UaJXhWZrW4gX/.6XG2VnFpD8JQ1xV7kKz9pNlYHcXmOPe',
+        'Admin',
+        1, -- Self-referencing since it's the first user
+        SYSUTCDATETIME(),
+        1
+    );
+    
+    -- Update the admin user to have itself as UpdatedBy
+    UPDATE core.Users 
+    SET UpdatedBy = 1, 
+        UpdatedAt = SYSUTCDATETIME()
+    WHERE Id = 1;
+    
+    PRINT 'Users table created successfully';
+    PRINT 'Default admin user created:';
+    PRINT '  Username: admin';
+    PRINT '  Password: Admin123!';
+END
+GO
+
+/* =========================
+   TEAMS
+   ========================= */
 IF OBJECT_ID('core.Club') IS NULL
 BEGIN
     CREATE TABLE core.Club(
