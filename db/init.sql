@@ -21,6 +21,14 @@ BEGIN
 END
 GO
 
+/* Extender Club con City y LogoUrl si no existen */
+IF COL_LENGTH('core.Club','City') IS NULL
+    ALTER TABLE core.Club ADD City NVARCHAR(100) NULL;
+GO
+IF COL_LENGTH('core.Club','LogoUrl') IS NULL
+    ALTER TABLE core.Club ADD LogoUrl NVARCHAR(512) NULL;
+GO
+
 /* =========================
    GAMES
    ========================= */
@@ -187,5 +195,26 @@ IF NOT EXISTS (
 BEGIN
   CREATE INDEX IX_MatchEvents_FoulsFast
     ON core.MatchEvents(GameId, Quarter, Team, EventType) INCLUDE(PlayerId);
+END
+GO
+
+/* =========================
+   USERS (Administradores)
+   ========================= */
+IF OBJECT_ID('core.Users') IS NULL
+BEGIN
+    CREATE TABLE core.Users(
+        UserId       INT IDENTITY(1,1) PRIMARY KEY,
+        UserName     NVARCHAR(100) NOT NULL,
+        Email        NVARCHAR(256) NULL,
+        PasswordHash NVARCHAR(255) NOT NULL,
+        Role         NVARCHAR(32)  NOT NULL DEFAULT 'Admin',
+        Active       BIT           NOT NULL DEFAULT 1,
+        CreatedAt    DATETIME2     NOT NULL DEFAULT SYSUTCDATETIME()
+    );
+
+    /* Índices únicos */
+    CREATE UNIQUE INDEX UX_Users_UserName ON core.Users(UserName);
+    CREATE UNIQUE INDEX UX_Users_Email ON core.Users(Email) WHERE Email IS NOT NULL;
 END
 GO

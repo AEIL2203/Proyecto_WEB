@@ -44,6 +44,7 @@ services:
     environment:
       - ASPNETCORE_URLS=${ASPNETCORE_URLS}
       - DB_CONNECTION_STRING=Server=db,1433;Database=${DB_NAME};User Id=sa;Password=${SA_PASSWORD};TrustServerCertificate=True;
+      - Jwt__Key=${JWT_KEY}
     ports:
       - "8080:8080"
     profiles: ["api", "all"]
