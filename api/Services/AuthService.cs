@@ -61,7 +61,9 @@ namespace MarcadorBaloncesto.Services
             {
                 Token = token,
                 Expiration = DateTime.UtcNow.AddDays(7),
-                Role = user.Role
+                Role = user.Role,
+                UserId = user.Id,
+                Username = user.Username ?? string.Empty
             };
         }
 

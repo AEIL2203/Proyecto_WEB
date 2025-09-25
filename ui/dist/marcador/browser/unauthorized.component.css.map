@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["unauthorized.component.ts"],
+  "sourcesContent": ["\n    .card {\n      box-shadow: 0 4px 8px rgba(0,0,0,0.1);\n      border: none;\n    }\n    .card-header {\n      padding: 1.5rem;\n    }\n  "],
+  "mappings": ";AACI,CAAA;AACE,cAAA,EAAA,IAAA,IAAA,KAAA,CAAA,EAAA,CAAA,EAAA,CAAA,EAAA;AACA,UAAA;;AAEF,CAAA;AACE,WAAA;;",
+  "names": []
+}

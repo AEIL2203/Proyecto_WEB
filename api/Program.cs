@@ -6,6 +6,9 @@ using MarcadorBaloncesto.Middleware;
 using MarcadorBaloncesto.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MarcadorBaloncesto.Infrastructure.Data;
+using MarcadorBaloncesto.Infrastructure.Repositories;
+using MarcadorBaloncesto.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,7 +62,6 @@ builder.Services.AddAuthorization(options =>
 });
 
 // Registrar servicios personalizados
-builder.Services.AddScoped<IAuthService, AuthService>();
 
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") 
     ?? builder.Configuration.GetConnectionString("DefaultConnection")
@@ -67,11 +69,25 @@ var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING"
 
 builder.Services.AddScoped<IAuthService>(_ => new AuthService(builder.Configuration, connectionString));
 
+// Infraestructura y aplicación
+builder.Services.AddSingleton<ISqlConnectionFactory>(_ => new SqlConnectionFactory(connectionString));
+builder.Services.AddScoped<IGameRepository, GameRepository>();
+builder.Services.AddScoped<IGameService, GameService>();
+builder.Services.AddScoped<IClockRepository, ClockRepository>();
+builder.Services.AddScoped<IClockService, ClockService>();
+builder.Services.AddScoped<ITeamRepository, TeamRepository>();
+builder.Services.AddScoped<IPlayerRepository, PlayerRepository>();
+builder.Services.AddScoped<ITeamService, TeamService>();
+builder.Services.AddScoped<IPlayerService, PlayerService>();
+
 var app = builder.Build();
 
 // Configuración del pipeline HTTP
-app.UseCors("Open");
+app.UseCors(corsPolicyName);
 app.UseRouting();
+
+// Manejo global de errores
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // Agregar el middleware JWT
 app.UseMiddleware<JwtMiddleware>();

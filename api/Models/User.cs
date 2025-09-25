@@ -37,6 +37,8 @@ namespace MarcadorBaloncesto.Models
         public required string Token { get; set; }
         public DateTime Expiration { get; set; }
         public required string Role { get; set; }
+        public int UserId { get; set; }
+        public string Username { get; set; } = string.Empty;
     }
 
     public class UserRegisterDto

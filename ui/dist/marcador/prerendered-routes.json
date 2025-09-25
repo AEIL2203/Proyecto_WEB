@@ -1,6 +1,9 @@
 {
   "routes": [
     "/",
-    "/results"
+    "/admin",
+    "/login",
+    "/results",
+    "/unauthorized"
   ]
 }

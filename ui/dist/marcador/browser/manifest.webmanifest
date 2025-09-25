@@ -1,0 +1,17 @@
+{
+  "name": "Marcador de Baloncesto",
+  "short_name": "Marcador",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd",
+  "description": "Aplicación de marcador de baloncesto en tiempo real",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
