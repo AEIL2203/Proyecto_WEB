@@ -1,0 +1,49 @@
+<nav class="navbar">
+  <div class="navbar-container">
+    <!-- Logo/Brand -->
+    <div class="navbar-brand">
+      <h2>🏀 Marcador de Baloncesto</h2>
+      <span class="navbar-subtitle">Panel de Administración</span>
+    </div>
+
+    <!-- Navigation Menu -->
+    <div class="navbar-menu">
+      <button 
+        class="nav-item" 
+        [class.active]="activeSection === 'teams'"
+        (click)="setActiveSection('teams')">
+        <span class="nav-icon">👥</span>
+        <span class="nav-text">Crear Equipo</span>
+      </button>
+
+      <button 
+        class="nav-item" 
+        [class.active]="activeSection === 'games'"
+        (click)="setActiveSection('games')">
+        <span class="nav-icon">🏀</span>
+        <span class="nav-text">Crear Partidos</span>
+      </button>
+
+      <button 
+        class="nav-item" 
+        [class.active]="activeSection === 'players'"
+        (click)="setActiveSection('players')">
+        <span class="nav-icon">⚽</span>
+        <span class="nav-text">Gestionar Jugadores</span>
+      </button>
+    </div>
+
+    <!-- User Menu -->
+    <div class="navbar-user">
+      <div class="user-info" *ngIf="user">
+        <span class="user-name"> Usuario: {{ user.userName }}</span>
+        <span class="user-role"> Rol: {{ user.role }}</span>
+      </div>
+      
+      <button class="logout-btn" (click)="logout()" title="Cerrar Sesión">
+        <span class="logout-icon">🚪</span>
+        <span class="logout-text">Cerrar Sesión</span>
+      </button>
+    </div>
+  </div>
+</nav>

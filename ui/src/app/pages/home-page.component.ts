@@ -40,7 +40,6 @@ export class HomePageComponent {
 
   // NUEVO: nombre del equipo a crear
   newTeamName = '';
-  // Regla: solo letras (incluye acentos/ñ) y espacios
   private teamNameRegex = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/;
 
   // Duración del cuarto seleccionada (en milisegundos)
@@ -51,11 +50,12 @@ export class HomePageComponent {
   games: Game[] = [];
   detail: GameDetail | null = null;
 
+  // Control de vista de detalles
+  viewMode: 'scoreboard' | 'controls' | null = null;
+
   constructor(private api: ApiService, private notifications: NotificationService) {
     this.reloadAll();
   }
-
-  // Validación pública para usar en template
   isTeamNameValid(value: string): boolean {
     const v = (value ?? '').trim();
     if (!v) return false;
@@ -154,5 +154,28 @@ export class HomePageComponent {
         complete: () => (this.advancing = false),
       });
     }
+  }
+
+  // Nuevos métodos para las vistas de partidos
+  viewScoreboard(gameId: number) {
+    this.viewMode = 'scoreboard';
+    this.api.getGame(gameId).subscribe((d) => {
+      this.detail = d;
+      this.notifications.showInfo(`📊 Mostrando marcador: ${d.game.homeTeam} vs ${d.game.awayTeam}`, 3000);
+    });
+  }
+
+  viewControls(gameId: number) {
+    this.viewMode = 'controls';
+    this.api.getGame(gameId).subscribe((d) => {
+      this.detail = d;
+      this.notifications.showInfo(`🎮 Panel de control activado: ${d.game.homeTeam} vs ${d.game.awayTeam}`, 3000);
+    });
+  }
+
+  closeDetail() {
+    this.detail = null;
+    this.viewMode = null;
+    this.notifications.showInfo('📋 Volviendo a la lista de partidos', 2000);
   }
 }

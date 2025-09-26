@@ -11,98 +11,144 @@
       description="Crear enfrentamientos y administrar partidos en tiempo real">
     </app-section-header>
     
-    <div class="grid-2">
-    <!-- Panel de partidos -->
-    <div class="card p-3">
-      <div class="card-header">
-        <div class="card-title">Partidos</div>
-        <div class="card-subtitle">Lista de los últimos 50</div>
-      </div>
-
-      <ul class="divider-y">
-        <li *ngFor="let g of games | slice:0:50" class="py-3">
-          <div style="display:grid; grid-template-columns: 1fr auto; gap:.5rem; align-items:center;">
-            <div>
-              <a [routerLink]="['/display', g.gameId]" class="font-medium">{{ g.homeTeam }} vs {{ g.awayTeam }}</a>
-              <div class="text-xs muted">Q{{ g.quarter }}</div>
-            </div>
-            <div class="row">
-              <span class="pill"
-                    [ngClass]="{
-                      'pill-finished': g.status==='FINISHED',
-                      'pill-inprogress': g.status==='IN_PROGRESS',
-                      'pill-scheduled': g.status==='SCHEDULED'
-                    }">
-                {{ g.status | lowercase | titlecase }}
-              </span>
-              <button class="btn btn-ghost btn-sm" [routerLink]="['/results']" [queryParams]="{ id: g.gameId }">Ver</button>
-            </div>
-          </div>
-        </li>
-      </ul>
-
-      <!-- Crear partido emparejando por IDs -->
-      <div class="mt-4 pt-3">
-        <div class="font-semibold mb-2" style="text-align:center;">Crear enfrentamiento</div>
-        <div style="display:flex; justify-content:center; width:100%;">
-          <div class="input-group" style="width:100%; max-width:640px; margin-bottom:10px;">
-            <div class="field" style="flex:1; min-width:220px;">
-              <label>Equipo local</label>
-              <select #homeSel class="select">
-                <option [value]="0">Locales</option>
-                <option *ngFor="let t of teams" [value]="t.teamId">{{ t.name }}</option>
-              </select>
-            </div>
-            <div class="field" style="flex:1; min-width:220px;">
-              <label>Equipo visitante</label>
-              <select #awaySel class="select">
-                <option [value]="0">Visitantes</option>
-                <option *ngFor="let t of teams" [value]="t.teamId">{{ t.name }}</option>
-              </select>
-            </div>
-            <div class="field" style="flex:1; min-width:180px;">
-              <label>Duración del cuarto</label>
-              <select [(ngModel)]="selectedQuarterMs" class="select">
-                <option [value]="30000">30 segundos</option>
-                <option [value]="300000">5 minutos</option>
-                <option [value]="600000">10 minutos</option>
-                <option [value]="720000">12 minutos</option>
-              </select>
-            </div>
+    <div class="grid-2" style="grid-template-columns: 1.4fr 2fr;">
+      <!-- Crear partido -->
+      <div class="card p-3">
+        <div class="card-header" style="display:block; text-align:center;">
+          <div class="card-title">Crear enfrentamiento</div>
+          <div class="card-subtitle">Crear un nuevo partido entre equipos</div>
+        </div>
+        
+        <div class="input-group" style="margin-bottom: 10px;">
+          <div class="field" style="flex:1; min-width:200px;">
+            <label>Equipo local</label>
+            <select #homeSel class="select">
+              <option [value]="0">Seleccionar equipo local</option>
+              <option *ngFor="let t of teams" [value]="t.teamId">{{ t.name }}</option>
+            </select>
           </div>
         </div>
-        <div style="display:flex; justify-content:center; width:100%; margin-bottom:8px;">
+        
+        <div class="input-group" style="margin-bottom: 10px;">
+          <div class="field" style="flex:1; min-width:200px;">
+            <label>Equipo visitante</label>
+            <select #awaySel class="select">
+              <option [value]="0">Seleccionar equipo visitante</option>
+              <option *ngFor="let t of teams" [value]="t.teamId">{{ t.name }}</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="input-group" style="margin-bottom: 10px;">
+          <div class="field" style="flex:1; min-width:200px;">
+            <label>Duración del cuarto</label>
+            <select [(ngModel)]="selectedQuarterMs" class="select">
+              <option [value]="30000">30 segundos</option>
+              <option [value]="300000">5 minutos</option>
+              <option [value]="600000">10 minutos</option>
+              <option [value]="720000">12 minutos</option>
+            </select>
+          </div>
+        </div>
+        
+        <div style="display:flex; justify-content:center; width:100%; margin-bottom: 8px;">
           <button
             class="btn btn-success"
             [disabled]="creating"
             (click)="createGame(+homeSel.value, +awaySel.value)"
-            style="min-width:200px;">
-            {{ creating ? 'Creando…' : 'Crear' }}
+            style="min-width: 200px;">
+            {{ creating ? 'Creando…' : 'Crear partido' }}
           </button>
         </div>
-        <div class="text-xs muted text-center">* Duración seleccionada: {{ getQuarterDurationText() }}</div>
+        <div class="text-xs muted mt-1">* Duración seleccionada: {{ getQuarterDurationText() }}</div>
+      </div>
+
+      <!-- Lista de partidos -->
+      <div class="card p-3">
+        <div class="card-header" style="display:block; text-align:center;">
+          <div class="card-title" style="margin-bottom: 4px;">Partidos existentes</div>
+          <div class="card-subtitle" style="display:block;">Los últimos 50 partidos</div>
+        </div>
+        <div style="max-height: 400px; overflow: auto; margin-top: 6px; border-radius: 10px;">
+          <ul class="list-clean text-sm" style="margin:0;">
+            <li *ngFor="let g of games | slice:0:50" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <div style="flex: 1;">
+                <div class="font-medium">{{ g.homeTeam }} vs {{ g.awayTeam }}</div>
+                <div class="text-xs muted">Cuarto {{ g.quarter }} • {{ g.homeScore }}-{{ g.awayScore }}</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <span class="pill text-xs"
+                      [ngClass]="{
+                        'pill-finished': g.status==='FINISHED',
+                        'pill-inprogress': g.status==='IN_PROGRESS',
+                        'pill-scheduled': g.status==='SCHEDULED'
+                      }">
+                  {{ g.status | lowercase | titlecase }}
+                </span>
+                <div style="display: flex; gap: 0.25rem;">
+                  <button class="btn btn-ghost btn-sm" 
+                          (click)="viewScoreboard(g.gameId)"
+                          title="Ver solo marcador">
+                    📊 Marcador
+                  </button>
+                  <button class="btn btn-ghost btn-sm" 
+                          (click)="viewControls(g.gameId)"
+                          title="Ver marcador y controles">
+                    🎮 Controles
+                  </button>
+                  <button class="btn btn-ghost btn-sm" 
+                          [routerLink]="['/results']" 
+                          [queryParams]="{ id: g.gameId }"
+                          title="Ver resultados completos">
+                    📋 Estadísticas
+                  </button>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
 
 
 
-    <!-- Detalle seleccionado -->
-    <div class="card p-3" *ngIf="detail as d">
-      <app-scoreboard [game]="d.game"></app-scoreboard>
+    <!-- Vista solo Marcador -->
+    <div class="card p-3" *ngIf="detail && viewMode === 'scoreboard'">
+      <div class="card-header" style="text-align:center; margin-bottom: 1rem;">
+        <div class="card-title">📊 Marcador del Partido</div>
+        <div class="card-subtitle">{{ detail.game.homeTeam }} vs {{ detail.game.awayTeam }}</div>
+      </div>
+      <app-scoreboard [game]="detail.game"></app-scoreboard>
+      
+      <div class="mt-4" style="text-align: center;">
+        <button class="btn btn-ghost" (click)="closeDetail()">
+          ← Volver a la lista
+        </button>
+      </div>
+    </div>
+
+    <!-- Vista Controles Completos -->
+    <div class="card p-3" *ngIf="detail && viewMode === 'controls'">
+      <div class="card-header" style="text-align:center; margin-bottom: 1rem;">
+        <div class="card-title">🎮 Panel de Control</div>
+        <div class="card-subtitle">{{ detail.game.homeTeam }} vs {{ detail.game.awayTeam }}</div>
+      </div>
+      
+      <app-scoreboard [game]="detail.game"></app-scoreboard>
 
       <!-- Panel de control centrado -->
       <div class="mt-4" style="display:grid; justify-items:center;">
         <div style="width:100%; max-width:900px;">
-          <app-control-panel [game]="d.game" (changed)="view(d.game.gameId)"></app-control-panel>
+          <app-control-panel [game]="detail.game" (changed)="view(detail.game.gameId)"></app-control-panel>
         </div>
       </div>
 
       <!-- Cronómetro en bloque aparte full-width -->
       <div class="mt-5 card p-3" style="margin-top: 1.25rem;">
         <app-clock
-          [gameId]="d.game.gameId"
-          [status]="d.game.status"
-          [quarter]="d.game.quarter"
+          [gameId]="detail.game.gameId"
+          [status]="detail.game.status"
+          [quarter]="detail.game.quarter"
           [showTeamFouls]="false"
           (expired)="onExpire()">
         </app-clock>
@@ -110,14 +156,19 @@
 
       <div class="mt-5" style="display:grid; gap:1.25rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 1.25rem;">
         <div class="card p-3" style="min-width:0;">
-          <app-team-roster [gameId]="d.game.gameId" side="HOME"></app-team-roster>
+          <app-team-roster [gameId]="detail.game.gameId" side="HOME"></app-team-roster>
         </div>
         <div class="card p-3" style="min-width:0;">
-          <app-team-roster [gameId]="d.game.gameId" side="AWAY"></app-team-roster>
+          <app-team-roster [gameId]="detail.game.gameId" side="AWAY"></app-team-roster>
         </div>
       </div>
+      
+      <div class="mt-4" style="text-align: center;">
+        <button class="btn btn-ghost" (click)="closeDetail()">
+          ← Volver a la lista
+        </button>
+      </div>
     </div>
-  </div>
 </section>
 
   <!-- Sección: Crear Equipos -->

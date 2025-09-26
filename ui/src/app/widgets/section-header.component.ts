@@ -5,78 +5,8 @@ import { CommonModule } from '@angular/common';
   selector: 'app-section-header',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div class="section-header">
-      <div class="section-header-content">
-        <div class="section-icon">{{ icon }}</div>
-        <div class="section-info">
-          <h2 class="section-title">{{ title }}</h2>
-          <p class="section-description">{{ description }}</p>
-        </div>
-      </div>
-      <div class="section-divider"></div>
-    </div>
-  `,
-  styles: [`
-    .section-header {
-      margin-bottom: 2rem;
-    }
-
-    .section-header-content {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1.5rem 0;
-    }
-
-    .section-icon {
-      font-size: 3rem;
-      opacity: 0.8;
-    }
-
-    .section-info {
-      flex: 1;
-    }
-
-    .section-title {
-      margin: 0;
-      font-size: 2rem;
-      font-weight: 700;
-      color: #1e40af;
-      line-height: 1.2;
-    }
-
-    .section-description {
-      margin: 0.25rem 0 0 0;
-      font-size: 1.1rem;
-      color: #64748b;
-      font-weight: 400;
-    }
-
-    .section-divider {
-      height: 3px;
-      background: linear-gradient(90deg, #3b82f6 0%, #1e40af 50%, transparent 100%);
-      border-radius: 2px;
-    }
-
-    @media (max-width: 768px) {
-      .section-header-content {
-        padding: 1rem 0;
-      }
-      
-      .section-icon {
-        font-size: 2.5rem;
-      }
-      
-      .section-title {
-        font-size: 1.5rem;
-      }
-      
-      .section-description {
-        font-size: 1rem;
-      }
-    }
-  `]
+  templateUrl: './section-header.component.html',
+  styleUrls: ['./section-header.component.css']
 })
 export class SectionHeaderComponent {
   @Input() icon = '📋';
