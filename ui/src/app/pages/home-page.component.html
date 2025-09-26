@@ -60,7 +60,6 @@
             {{ creating ? 'Creando…' : 'Crear partido' }}
           </button>
         </div>
-        <div class="text-xs muted mt-1">* Duración seleccionada: {{ getQuarterDurationText() }}</div>
       </div>
 
       <!-- Lista de partidos -->
@@ -86,16 +85,18 @@
                   {{ g.status | lowercase | titlecase }}
                 </span>
                 <div style="display: flex; gap: 0.25rem;">
-                  <button class="btn btn-ghost btn-sm" 
-                          (click)="viewScoreboard(g.gameId)"
-                          title="Ver solo marcador">
+                  <a class="btn btn-ghost btn-sm"
+                     [href]="'/display/' + g.gameId"
+                     target="_blank" rel="noopener"
+                     title="Ver solo marcador en nueva pestaña">
                     📊 Marcador
-                  </button>
-                  <button class="btn btn-ghost btn-sm" 
-                          (click)="viewControls(g.gameId)"
-                          title="Ver marcador y controles">
+                  </a>
+                  <a class="btn btn-ghost btn-sm"
+                     [href]="'/?id=' + g.gameId + '&mode=controls'"
+                     target="_blank" rel="noopener"
+                     title="Ver marcador y controles en nueva pestaña">
                     🎮 Controles
-                  </button>
+                  </a>
                   <button class="btn btn-ghost btn-sm" 
                           [routerLink]="['/results']" 
                           [queryParams]="{ id: g.gameId }"

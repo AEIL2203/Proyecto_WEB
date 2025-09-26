@@ -1,7 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
+
 import { AdminTeamRosterComponent } from '../widgets/admin-team-roster.component';
 import { NavigationBarComponent } from '../widgets/navigation-bar.component';
 import { SectionHeaderComponent } from '../widgets/section-header.component';
@@ -29,7 +31,7 @@ import { TeamRosterComponent } from '../widgets/team-roster.component';
   ],
   templateUrl: './home-page.component.html',
 })
-export class HomePageComponent {
+export class HomePageComponent implements OnInit {
   // filtros / estado
   q = '';
   creating = false;
@@ -53,9 +55,26 @@ export class HomePageComponent {
   // Control de vista de detalles
   viewMode: 'scoreboard' | 'controls' | null = null;
 
-  constructor(private api: ApiService, private notifications: NotificationService) {
+  constructor(private api: ApiService, private notifications: NotificationService, private route: ActivatedRoute) {
     this.reloadAll();
   }
+
+  ngOnInit(): void {
+    // Permite abrir directamente vistas desde URL: ?id=123&mode=controls|scoreboard
+    this.route.queryParamMap.subscribe(params => {
+      const idStr = params.get('id');
+      const mode = params.get('mode');
+      const id = idStr ? +idStr : NaN;
+      if (!isNaN(id) && id > 0 && mode) {
+        if (mode === 'controls') {
+          this.viewControls(id);
+        } else if (mode === 'scoreboard') {
+          this.viewScoreboard(id);
+        }
+      }
+    });
+  }
+
   isTeamNameValid(value: string): boolean {
     const v = (value ?? '').trim();
     if (!v) return false;

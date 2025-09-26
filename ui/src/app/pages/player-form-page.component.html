@@ -1,0 +1,66 @@
+<div class="container" style="max-width: 720px; margin: 0 auto;">
+  <app-section-header 
+    icon="👤" 
+    title="Agregar nuevo jugador" 
+    description="Completa los datos del jugador y asígnalo a un equipo">
+  </app-section-header>
+
+  <div class="card p-3">
+    <form (ngSubmit)="onSubmit()" #form="ngForm">
+      <div class="input-group" style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="field">
+          <label>Equipo</label>
+          <select [(ngModel)]="model.teamId" name="teamId" required class="select">
+            <option [ngValue]="null">Seleccione equipo…</option>
+            <option *ngFor="let t of teams; trackBy: trackTeam" [ngValue]="t.teamId">{{ t.name }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Nombre</label>
+          <input [(ngModel)]="model.name" name="name" required placeholder="Ej. Juan Pérez" class="input" />
+        </div>
+      </div>
+
+      <div class="input-group" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 10px;">
+        <div class="field">
+          <label>Número</label>
+          <input [(ngModel)]="model.number" name="number" type="number" min="0" max="99" placeholder="0–99" class="input" />
+        </div>
+        <div class="field">
+          <label>Posición</label>
+          <select [(ngModel)]="model.position" name="position" class="select">
+            <option [ngValue]="null">Seleccione posición…</option>
+            <option [ngValue]="'base'">base</option>
+            <option [ngValue]="'escolta'">escolta</option>
+            <option [ngValue]="'alero'">alero</option>
+            <option [ngValue]="'ala-pivot'">ala-pivot</option>
+            <option [ngValue]="'pivot'">pivot</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Estatura (cm)</label>
+          <input [(ngModel)]="model.height" name="height" type="number" min="120" max="250" placeholder="Ej. 185" class="input" />
+        </div>
+      </div>
+
+      <div class="input-group" style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
+        <div class="field">
+          <label>Edad</label>
+          <input [(ngModel)]="model.age" name="age" type="number" min="10" max="70" placeholder="Ej. 24" class="input" />
+        </div>
+        <div class="field">
+          <label>Nacionalidad</label>
+          <input [(ngModel)]="model.nationality" name="nationality" placeholder="Ej. Mexicana" class="input" />
+        </div>
+      </div>
+
+      <div style="display:flex; gap: 10px; justify-content:center; margin-top: 16px;">
+        <button class="btn btn-success" type="submit" [disabled]="saving || !form.form.valid" style="min-width: 200px;">{{ saving ? 'Guardando…' : 'Guardar' }}</button>
+        <button class="btn btn-ghost" type="button" (click)="goBack()">Cancelar</button>
+      </div>
+
+      <div *ngIf="errorMsg" class="error" style="margin-top:8px;">{{ errorMsg }}</div>
+      <div class="text-xs muted" style="margin-top:6px;">Nota: Estatura, edad y nacionalidad se guardarán cuando el backend los soporte.</div>
+    </form>
+  </div>
+</div>

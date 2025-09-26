@@ -5,7 +5,7 @@
   </div>
 
   <!-- Selección de equipo -->
-  <div class="input-group" style="margin-bottom: 12px;">
+  <div class="input-group" style="margin-bottom: 12px; display:flex; gap:10px; align-items:flex-end;">
     <div class="field" style="min-width:260px; max-width:420px;">
       <label>Equipo</label>
       <select #teamSel class="select" (change)="onSelectTeam(teamSel.value)">
@@ -15,30 +15,41 @@
         </option>
       </select>
     </div>
+    <a class="btn btn-success" 
+       [routerLink]="['/players/new']"
+       [queryParams]="{ teamId: selectedTeamId || null }"
+       style="white-space: nowrap;">
+      ➕ Agregar nuevo jugador
+    </a>
   </div>
-
   <!-- Lista de jugadores -->
   <div *ngIf="selectedTeamId !== null; else noTeam">
     <div class="muted text-sm" style="margin-bottom: 10px;">Equipo #{{ selectedTeamId }}</div>
 
     <div *ngIf="loading">Cargando jugadores…</div>
-    <div *ngIf="!loading">
+    <div *ngIf="!loading" class="admin-roster">
       <table class="w-full text-sm" *ngIf="players.length; else empty">
+        <colgroup>
+          <col style="width: 56px;" />
+          <col />
+          <col style="width: 140px;" />
+          <col style="width: 140px;" />
+        </colgroup>
         <thead>
-          <tr class="text-left">
-            <th style="width:3rem;">#</th>
-            <th>Nombre</th>
-            <th style="width:8rem;">Posición</th>
-            <th style="width:6rem;"></th>
+          <tr>
+            <th scope="col" class="col-num text-left">#</th>
+            <th scope="col" class="col-name text-left">Nombre</th>
+            <th scope="col" class="col-pos text-left">Posición</th>
+            <th scope="col" class="col-actions text-right"></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let p of players; trackBy: trackPlayer" style="height: 42px;">
-            <td>{{ p.number ?? '—' }}</td>
-            <td>{{ p.name }}</td>
-            <td>{{ p.position || '' }}</td>
-            <td class="text-right">
-              <button class="btn btn-ghost btn-sm" title="Eliminar" aria-label="Eliminar jugador" (click)="deletePlayer(p)" style="padding: 4px 8px;">
+          <tr *ngFor="let p of players; trackBy: trackPlayer">
+            <td class="col-num text-left">{{ p.number ?? '—' }}</td>
+            <td class="col-name text-left">{{ p.name }}</td>
+            <td class="col-pos text-left">{{ p.position || '' }}</td>
+            <td class="col-actions text-right">
+              <button class="btn btn-ghost btn-sm" title="Eliminar" aria-label="Eliminar usuario" (click)="deletePlayer(p)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
                   <path d="M9 3h6a1 1 0 0 1 1 1v2h4v2h-2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8H4V6h4V4a1 1 0 0 1 1-1zm1 4v12h2V7h-2zm4 0v12h2V7h-2zM10 5v1h4V5h-4z"/>
                 </svg>
@@ -47,14 +58,13 @@
           </tr>
         </tbody>
       </table>
-      <ng-template #empty><div class="text-sm muted">Sin jugadores.</div></ng-template>
+      <ng-template #empty><div class="text-sm muted">Equipo sin jugadores.</div></ng-template>
     </div>
 
-    <!-- Alta de jugador -->
+    <!-- Alta de usuario -->
     <div class="card-subsection" style="margin-top: 14px;">
       <div class="section-title" style="margin-bottom: 10px;">Agregar jugador</div>
       <div class="input-group" style="margin-bottom: 10px;">
-        <input [(ngModel)]="pName" placeholder="Nombre" class="input" />
         <input [(ngModel)]="pNumber" type="number" placeholder="N° (0–99 opcional)" class="input" />
         <input [(ngModel)]="pPosition" placeholder="Posición (opcional)" class="input" />
       </div>
@@ -64,7 +74,6 @@
         </button>
       </div>
       <div *ngIf="errorMsg" class="error">{{ errorMsg }}</div>
-      <div class="text-xs muted mt-1">* UNIQUE (Team, Number) cuando el número no es nulo.</div>
     </div>
   </div>
 

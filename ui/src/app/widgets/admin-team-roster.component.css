@@ -1,6 +1,7 @@
 :root {
   --ar-radius: 12px;
   --ar-border: 1px solid rgba(255,255,255,0.12);
+  --ar-border-accent: 1px solid rgba(59,130,246,0.45); /* celeste/azul */
   --ar-bg: rgba(255,255,255,0.03);
   --ar-bg-elev: rgba(255,255,255,0.05);
   --ar-shadow: 0 6px 24px rgba(0,0,0,0.24);
@@ -10,6 +11,7 @@
 @media (prefers-color-scheme: light) {
   :root {
     --ar-border: 1px solid rgba(0,0,0,0.12);
+    --ar-border-accent: 1px solid rgba(37,99,235,0.40); /* celeste/azul para claro */
     --ar-bg: rgba(0,0,0,0.02);
     --ar-bg-elev: rgba(0,0,0,0.04);
     --ar-shadow: 0 8px 24px rgba(0,0,0,0.10);
@@ -19,7 +21,7 @@
 
 /* Contenedor principal */
 .admin-roster {
-  border: var(--ar-border) !important;
+  border: var(--ar-border-accent) !important;
   border-radius: var(--ar-radius) !important;
   background: radial-gradient(1200px 600px at 0% -20%, var(--ar-bg-elev), transparent), var(--ar-bg);
   box-shadow: var(--ar-shadow);
@@ -39,18 +41,30 @@
   border-spacing: 0;
   overflow: hidden;
   width: 100%;
+  border: var(--ar-border-accent);
+  border-radius: var(--ar-radius);
+  background: #fd0101f3;
 }
 .admin-roster thead th {
   font-weight: 600;
-  padding: 10px 12px;
-  border-bottom: var(--ar-border);
+  padding: 10px 16px;
+  border-bottom: var(--ar-border-accent);
+  background: linear-gradient(180deg, rgba(99,102,241,0.12), rgba(99,102,241,0.06));
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  backdrop-filter: blur(2px);
+  border-right: var(--ar-border-accent);
 }
+.admin-roster thead th:last-child { border-right: 0; }
 .admin-roster tbody td {
-  padding: 10px 12px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 10px 16px;
+  border-top: var(--ar-border-accent);
+  border-right: var(--ar-border-accent);
 }
+.admin-roster tbody td:last-child { border-right: 0; }
 @media (prefers-color-scheme: light) {
-  .admin-roster tbody td { border-top: 1px solid rgba(0,0,0,0.06); }
+  .admin-roster tbody td { border-top: var(--ar-border-accent); border-right: var(--ar-border-accent); }
 }
 .admin-roster tbody tr:nth-child(odd) {
   background: var(--ar-bg);
