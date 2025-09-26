@@ -1,13 +1,17 @@
-<div class="p-4">
-  <!-- Hero y búsqueda -->
-  <div class="container stack">
-    <header class="hero">
-      <h1>Gestión de partidos de Baloncesto</h1>
-      <p class="muted">Hecho por Grupo #9</p>
-    </header>
-  </div>
+<!-- Barra de navegación -->
+<app-navigation-bar (sectionChange)="onSectionChange($event)"></app-navigation-bar>
 
-  <section class="container grid-2">
+<div class="p-4">
+
+  <!-- Sección: Crear Partidos -->
+  <section class="container" *ngIf="activeSection === 'games'">
+    <app-section-header 
+      icon="🏀" 
+      title="Gestión de Partidos" 
+      description="Crear enfrentamientos y administrar partidos en tiempo real">
+    </app-section-header>
+    
+    <div class="grid-2">
     <!-- Panel de partidos -->
     <div class="card p-3">
       <div class="card-header">
@@ -80,52 +84,7 @@
       </div>
     </div>
 
-    <!-- Lista de equipos -->
-    <div class="card p-3">
-      <div class="card-header" style="display:block; text-align:center;">
-        <div class="card-title" style="margin-bottom: 4px;">Equipos existentes</div>
-        <div class="card-subtitle" style="display:block;">Los últimos creados</div>
-      </div>
-      <div style="max-height: 320px; overflow: auto; margin-top: 6px; border-radius: 10px;">
-        <ul class="list-clean text-sm" style="margin:0;">
-          <li *ngFor="let t of teams" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
-            <span>{{ t.name }}</span>
-            <span class="text-xs" style="opacity:.7; border:1px solid rgba(255,255,255,0.18); padding:2px 8px; border-radius:999px;">#{{t.teamId}}</span>
-          </li>
-        </ul>
-      </div>
-    </div>
 
-    <!-- Crear equipo -->
-    <div class="card p-3">
-      <div class="card-header" style="display:block; text-align:center;">
-        <div class="card-title">Crear equipo</div>
-      </div>
-      <div class="input-group" style="margin-bottom: 10px;">
-        <div class="field" style="flex:1; min-width:260px;">
-          <label>Nombre del equipo</label>
-          <input [(ngModel)]="newTeamName" placeholder="Ej. Los halcones" class="input" />
-          <div class="text-xs" style="margin-top:4px;">
-            * Solo letras y espacios.
-            <span *ngIf="newTeamName.trim() && !isTeamNameValid(newTeamName)" style="color:#f87171;">Nombre inválido.</span>
-          </div>
-        </div>
-      </div>
-      <div style="display:flex; justify-content:center; width:100%; margin-bottom: 8px;">
-        <button class="btn btn-success"
-                [disabled]="creating || !isTeamNameValid(newTeamName)"
-                (click)="createTeam()"
-                style="min-width: 200px;">
-          {{ creating ? 'Creando…' : 'Crear equipo' }}
-        </button>
-      </div>
-      <div class="text-xs muted mt-1">* El nombre debe ser único.</div>
-    </div>
-
-    <!-- Gestión de jugadores por equipo (admin) -->
-    <div class="mt-4">
-      <app-admin-team-roster></app-admin-team-roster>
-    </div>
 
     <!-- Detalle seleccionado -->
     <div class="card p-3" *ngIf="detail as d">
@@ -158,6 +117,74 @@
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+  <!-- Sección: Crear Equipos -->
+  <section class="container" *ngIf="activeSection === 'teams'">
+    <app-section-header 
+      icon="👥" 
+      title="Gestión de Equipos" 
+      description="Crear y administrar equipos del sistema">
+    </app-section-header>
+    <div class="grid-2">
+      <!-- Crear equipo -->
+      <div class="card p-3">
+        <div class="card-header" style="display:block; text-align:center;">
+          <div class="card-title">Crear equipo</div>
+          <div class="card-subtitle">Agregar un nuevo equipo al sistema</div>
+        </div>
+        <div class="input-group" style="margin-bottom: 10px;">
+          <div class="field" style="flex:1; min-width:260px;">
+            <label>Nombre del equipo</label>
+            <input [(ngModel)]="newTeamName" placeholder="Ej. Los halcones" class="input" />
+            <div class="text-xs" style="margin-top:4px;">
+              * Solo letras y espacios.
+              <span *ngIf="newTeamName.trim() && !isTeamNameValid(newTeamName)" style="color:#f87171;">Nombre inválido.</span>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:center; width:100%; margin-bottom: 8px;">
+          <button class="btn btn-success"
+                  [disabled]="creating || !isTeamNameValid(newTeamName)"
+                  (click)="createTeam()"
+                  style="min-width: 200px;">
+            {{ creating ? 'Creando…' : 'Crear equipo' }}
+          </button>
+        </div>
+        <div class="text-xs muted mt-1">* El nombre debe ser único.</div>
+      </div>
+
+      <!-- Lista de equipos -->
+      <div class="card p-3">
+        <div class="card-header" style="display:block; text-align:center;">
+          <div class="card-title" style="margin-bottom: 4px;">Equipos existentes</div>
+          <div class="card-subtitle" style="display:block;">Los últimos creados</div>
+        </div>
+        <div style="max-height: 320px; overflow: auto; margin-top: 6px; border-radius: 10px;">
+          <ul class="list-clean text-sm" style="margin:0;">
+            <li *ngFor="let t of teams" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+              <span>{{ t.name }}</span>
+              <span class="text-xs" style="opacity:.7; border:1px solid rgba(255,255,255,0.18); padding:2px 8px; border-radius:999px;">#{{t.teamId}}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </section>
+
+  <!-- Sección: Gestionar Jugadores -->
+  <section class="container" *ngIf="activeSection === 'players'">
+    <app-section-header 
+      icon="⚽" 
+      title="Gestión de Jugadores" 
+      description="Administrar plantillas y jugadores por equipo">
+    </app-section-header>
+    
+    <div class="card p-3">
+      <app-admin-team-roster></app-admin-team-roster>
+    </div>
+  </section>
+
 </div>
 

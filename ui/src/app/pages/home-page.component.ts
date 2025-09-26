@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AdminTeamRosterComponent } from '../widgets/admin-team-roster.component';
+import { NavigationBarComponent } from '../widgets/navigation-bar.component';
+import { SectionHeaderComponent } from '../widgets/section-header.component';
 import { ApiService, Game, GameDetail, Team } from '../services/api.service';
 import { NotificationService } from '../services/notification.service';
 import { ScoreboardComponent } from '../widgets/scoreboard.component';
@@ -17,6 +19,8 @@ import { TeamRosterComponent } from '../widgets/team-roster.component';
     CommonModule,
     FormsModule,
     RouterModule,
+    NavigationBarComponent,
+    SectionHeaderComponent,
     ScoreboardComponent,
     ControlPanelComponent,
     ClockComponent,
@@ -30,6 +34,9 @@ export class HomePageComponent {
   q = '';
   creating = false;
   advancing = false;
+  
+  // Control de secciones de navegación
+  activeSection = 'games';
 
   // NUEVO: nombre del equipo a crear
   newTeamName = '';
@@ -53,6 +60,11 @@ export class HomePageComponent {
     const v = (value ?? '').trim();
     if (!v) return false;
     return this.teamNameRegex.test(v);
+  }
+
+  // Manejar cambio de sección desde la barra de navegación
+  onSectionChange(section: string) {
+    this.activeSection = section;
   }
 
   // ===== API wrappers (lógica mínima) =====
