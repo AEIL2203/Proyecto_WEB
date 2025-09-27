@@ -21,24 +21,97 @@
   --shadow-sm: 0 1px 2px rgba(0,0,0,.2);
   --shadow: 0 10px 25px rgba(0,0,0,.35);
 }
-
 html, body {
   height: 100%;
   background: radial-gradient(1200px 800px at 10% 10%, #0b1220, var(--bg)),
               linear-gradient(180deg, #0b1220, #0a0f1d);
   color: var(--text);
-  overflow-x: hidden; /* evita scroll lateral accidental */
+  overflow-x: hidden;
 }
 
-/* ===== Cards / containers ===== */
+/* Panel de información del usuario */
+.user-info-panel {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.user-welcome {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.user-greeting {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.user-role {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.user-role.admin-role {
+  background: rgba(255, 215, 0, 0.3);
+  color: #FFD700;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.admin-link {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.admin-link:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.logout-btn {
+  background: rgba(220, 53, 69, 0.8);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: rgba(220, 53, 69, 1);
+  transform: translateY(-1px);
+}
+
+/* ===== Cards ===== */
 .card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  background: var(--card);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
   max-width: 100%;
 }
+
 .card:hover {
   transform: translateY(-2px);
   box-shadow: 0 16px 40px rgba(0,0,0,.45);

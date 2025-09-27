@@ -4,10 +4,16 @@ import { DisplayPageComponent } from './pages/display-page.component';
 import { ResultsPageComponent } from './pages/results-page.component'; 
 import { LoginPageComponent } from './pages/login-page.component';
 import { authGuard } from './services/auth.guard';
+import { adminGuard } from './services/admin.guard';
+import { RegisterUserPageComponent } from './pages/register-user-page.component';
+import { UserListPageComponent } from './pages/user-list-page.component';
 
 export const routes: Routes = [
   { path: '', component: HomePageComponent, canActivate: [authGuard] }, // tablero de control (protegido)
   { path: 'login', component: LoginPageComponent },
+  { path: 'register', component: RegisterUserPageComponent }, // registro público
+  { path: 'admin/users', component: UserListPageComponent, canActivate: [adminGuard] }, // lista de usuarios (solo admin)
+  { path: 'admin/register-user', component: RegisterUserPageComponent, canActivate: [adminGuard] }, // solo administradores
   { path: 'display/:id', component: DisplayPageComponent },   // tablero público 
   { path: 'results', component: ResultsPageComponent },       // página de resultados
   { path: '**', redirectTo: '' }

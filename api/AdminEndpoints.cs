@@ -3,16 +3,17 @@ using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using Api.Auth.Services;
 
-public static class AdminEndpoints
-{
-    const string T = "HoopsDB.core.";
-
-    public static void MapAdminEndpoints(this WebApplication app, Func<string> cs)
+    public static class AdminEndpoints
     {
-        var admin = app.MapGroup("/api/admin").RequireAuthorization("Admin");
+        const string T = "HoopsDB.core.";
 
-        static bool IsNullOrWhite(string? s) => string.IsNullOrWhiteSpace(s);
+        public static void MapAdminEndpoints(this WebApplication app, Func<string> cs)
+        {
+            var admin = app.MapGroup("/api/admin").RequireAuthorization("Admin");
+
+            static bool IsNullOrWhite(string? s) => string.IsNullOrWhiteSpace(s);
 
         // GET /api/admin/teams?q=
         admin.MapGet("/teams", async ([FromQuery] string? q) =>
@@ -118,5 +119,127 @@ public static class AdminEndpoints
             var ok = await c.ExecuteAsync($"DELETE FROM {T}Athletes WHERE PlayerId=@playerId;", new { playerId });
             return ok > 0 ? Results.NoContent() : Results.NotFound();
         }).WithOpenApi();
+
+        // GET /api/admin/users - obtener lista de usuarios (Admin-only)
+        admin.MapGet("/users", async () =>
+        {
+            using var c = new SqlConnection(cs());
+            var users = await c.QueryAsync($@"
+                SELECT UserId, UserName, Email, Role, Active, CreatedAt 
+                FROM {T}Users 
+                ORDER BY CreatedAt DESC;");
+            return Results.Ok(users);
+        }).WithOpenApi();
+
+        // POST /api/admin/users - crear usuario (Admin-only)
+        admin.MapPost("/users", async ([FromBody] CreateUserDto body, IPasswordHasher hasher) =>
+        {
+            var userName = (body?.UserName ?? string.Empty).Trim();
+            var password = body?.Password ?? string.Empty;
+            var email = string.IsNullOrWhiteSpace(body?.Email) ? null : body!.Email!.Trim();
+            var role = string.IsNullOrWhiteSpace(body?.Role) ? "User" : body!.Role!.Trim();
+
+            if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
+                return Results.BadRequest(new { error = "UserName y Password requeridos." });
+
+            // Hash de contraseña
+            var hash = hasher.Hash(password);
+
+            using var c = new SqlConnection(cs());
+            try
+            {
+                var id = await c.ExecuteScalarAsync<int>($@"INSERT INTO {T}Users(UserName, Email, PasswordHash, Role, Active)
+                    OUTPUT INSERTED.UserId VALUES(@userName, @email, @hash, @role, 1);",
+                    new { userName, email, hash, role });
+                return Results.Created($"/api/admin/users/{id}", new { userId = id, userName, email, role });
+            }
+            catch (SqlException ex) when (ex.Number is 2601 or 2627)
+            {
+                // Índices únicos en UserName y Email
+                return Results.Conflict(new { error = "Usuario o email ya existe." });
+            }
+        }).WithOpenApi();
+
+        // PATCH /api/admin/users/{userId} - actualizar usuario (Admin-only)
+        admin.MapPatch("/users/{userId:int}", async (int userId, [FromBody] UpdateUserDto body) =>
+        {
+            using var c = new SqlConnection(cs());
+            
+            // Verificar que el usuario existe
+            var existingUser = await c.QuerySingleOrDefaultAsync($@"
+                SELECT UserId, UserName, Email, Role, Active 
+                FROM {T}Users 
+                WHERE UserId = @userId", new { userId });
+                
+            if (existingUser == null)
+                return Results.NotFound(new { error = "Usuario no encontrado." });
+
+            // Construir la consulta de actualización dinámicamente
+            var updates = new List<string>();
+            var parameters = new Dictionary<string, object> { { "userId", userId } };
+
+            if (!string.IsNullOrWhiteSpace(body?.UserName))
+            {
+                updates.Add("UserName = @userName");
+                parameters["userName"] = body.UserName.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(body?.Email))
+            {
+                updates.Add("Email = @email");
+                parameters["email"] = body.Email.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(body?.Role))
+            {
+                updates.Add("Role = @role");
+                parameters["role"] = body.Role.Trim();
+            }
+
+            if (body?.Active.HasValue == true)
+            {
+                updates.Add("Active = @active");
+                parameters["active"] = body.Active.Value;
+            }
+
+            if (updates.Count == 0)
+                return Results.BadRequest(new { error = "No hay campos para actualizar." });
+
+            try
+            {
+                var sql = $"UPDATE {T}Users SET {string.Join(", ", updates)} WHERE UserId = @userId";
+                var rowsAffected = await c.ExecuteAsync(sql, parameters);
+                
+                if (rowsAffected > 0)
+                {
+                    // Devolver el usuario actualizado
+                    var updatedUser = await c.QuerySingleAsync($@"
+                        SELECT UserId, UserName, Email, Role, Active, CreatedAt 
+                        FROM {T}Users 
+                        WHERE UserId = @userId", new { userId });
+                    return Results.Ok(updatedUser);
+                }
+                else
+                {
+                    return Results.NotFound(new { error = "Usuario no encontrado." });
+                }
+            }
+            catch (SqlException ex) when (ex.Number is 2601 or 2627)
+            {
+                return Results.Conflict(new { error = "Nombre de usuario o email ya existe." });
+            }
+        }).WithOpenApi();
+
+        // DELETE /api/admin/users/{userId} - eliminar usuario (Admin-only)
+        admin.MapDelete("/users/{userId:int}", async (int userId) =>
+        {
+            using var c = new SqlConnection(cs());
+            var rowsAffected = await c.ExecuteAsync($"DELETE FROM {T}Users WHERE UserId = @userId", new { userId });
+            return rowsAffected > 0 ? Results.NoContent() : Results.NotFound();
+        }).WithOpenApi();
     }
+
+    // DTOs locales
+    public record CreateUserDto(string UserName, string Password, string? Email, string? Role);
+    public record UpdateUserDto(string? UserName, string? Email, string? Role, bool? Active);
 }

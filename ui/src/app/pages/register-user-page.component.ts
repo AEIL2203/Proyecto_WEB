@@ -1,27 +1,26 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
+import { Router, ActivatedRoute } from '@angular/router';
+import { ApiService } from '../services/api.service';
 
 @Component({
   standalone: true,
-  selector: 'app-login-page',
+  selector: 'app-register-user-page',
   imports: [CommonModule, FormsModule],
   template: `
-  <div class="login-container">
-    <div class="login-card">
-      <div class="login-header">
+  <div class="register-container">
+    <div class="register-card">
+      <div class="register-header">
         <div class="user-icon">
           <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" fill="white"/>
-            <path d="M12 14C7.58172 14 4 17.5817 4 22H20C20 17.5817 16.4183 14 12 14Z" fill="white"/>
+            <path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="white"/>
           </svg>
         </div>
-        <h2>INICIAR SESIÓN</h2>
+        <h2>REGISTRARSE</h2>
       </div>
 
-      <form (ngSubmit)="onSubmit()" #f="ngForm" class="login-form">
+      <form (ngSubmit)="onSubmit()" #f="ngForm" class="register-form">
         <div class="input-group">
           <div class="input-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -31,10 +30,25 @@ import { AuthService } from '../services/auth.service';
           </div>
           <input 
             type="text" 
-            name="user" 
+            name="userName" 
             [(ngModel)]="userName" 
             placeholder="Usuario" 
             required 
+            class="form-input"
+          />
+        </div>
+
+        <div class="input-group">
+          <div class="input-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" fill="#5DADE2"/>
+            </svg>
+          </div>
+          <input 
+            type="email" 
+            name="email" 
+            [(ngModel)]="email" 
+            placeholder="Correo electrónico" 
             class="form-input"
           />
         </div>
@@ -47,34 +61,45 @@ import { AuthService } from '../services/auth.service';
           </div>
           <input 
             type="password" 
-            name="pass" 
+            name="password" 
             [(ngModel)]="password" 
             placeholder="Contraseña" 
             required 
+            minlength="6"
             class="form-input"
           />
         </div>
 
-        <div class="remember-me">
-          <input type="checkbox" id="remember" />
-          <label for="remember">Recordarme</label>
+        <div class="input-group">
+          <div class="input-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L13.09 8.26L22 9L13.09 9.74L12 16L10.91 9.74L2 9L10.91 8.26L12 2Z" fill="#5DADE2"/>
+            </svg>
+          </div>
+          <select name="role" [(ngModel)]="role" class="form-select">
+            <option value="User">Usuario</option>
+            <option value="Admin">Administrador</option>
+          </select>
         </div>
 
         <div *ngIf="error" class="error-message">{{ error }}</div>
+        <div *ngIf="success" class="success-message">
+          ¡Usuario creado exitosamente! Redirigiendo al login en {{ countdown }} segundos...
+        </div>
 
-        <button type="submit" [disabled]="loading" class="login-btn">
-          {{ loading ? 'INICIANDO SESIÓN...' : 'INICIAR SESIÓN' }}
+        <button type="submit" [disabled]="loading" class="register-btn">
+          {{ loading ? 'CREANDO CUENTA...' : 'CREAR CUENTA' }}
         </button>
 
-        <div class="forgot-password">
-          <a href="#" (click)="goToRegister(); $event.preventDefault()">Crear cuenta</a>
+        <div class="login-link">
+          <a href="#" (click)="goHome(); $event.preventDefault()">¿Ya tienes una cuenta? Inicia sesión aquí</a>
         </div>
       </form>
     </div>
   </div>
   `,
   styles: [`
-    .login-container {
+    .register-container {
       min-height: 100vh;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       display: flex;
@@ -84,18 +109,18 @@ import { AuthService } from '../services/auth.service';
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    .login-card {
+    .register-card {
       background: rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(10px);
       border-radius: 20px;
       padding: 40px;
       width: 100%;
-      max-width: 400px;
+      max-width: 450px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    .login-header {
+    .register-header {
       text-align: center;
       margin-bottom: 30px;
     }
@@ -111,7 +136,7 @@ import { AuthService } from '../services/auth.service';
       margin: 0 auto 20px;
     }
 
-    .login-header h2 {
+    .register-header h2 {
       color: white;
       font-size: 28px;
       font-weight: 300;
@@ -119,7 +144,7 @@ import { AuthService } from '../services/auth.service';
       letter-spacing: 2px;
     }
 
-    .login-form {
+    .register-form {
       display: flex;
       flex-direction: column;
       gap: 20px;
@@ -137,7 +162,7 @@ import { AuthService } from '../services/auth.service';
       z-index: 2;
     }
 
-    .form-input {
+    .form-input, .form-select {
       width: 100%;
       padding: 15px 15px 15px 50px;
       border: none;
@@ -149,7 +174,7 @@ import { AuthService } from '../services/auth.service';
       transition: all 0.3s ease;
     }
 
-    .form-input:focus {
+    .form-input:focus, .form-select:focus {
       background: white;
       box-shadow: 0 0 0 2px rgba(93, 173, 226, 0.5);
     }
@@ -158,17 +183,8 @@ import { AuthService } from '../services/auth.service';
       color: #999;
     }
 
-    .remember-me {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: white;
-      font-size: 14px;
-    }
-
-    .remember-me input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
+    .form-select {
+      cursor: pointer;
     }
 
     .error-message {
@@ -180,7 +196,16 @@ import { AuthService } from '../services/auth.service';
       text-align: center;
     }
 
-    .login-btn {
+    .success-message {
+      background: rgba(40, 167, 69, 0.9);
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .register-btn {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border: none;
@@ -194,22 +219,22 @@ import { AuthService } from '../services/auth.service';
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
 
-    .login-btn:hover:not(:disabled) {
+    .register-btn:hover:not(:disabled) {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
     }
 
-    .login-btn:disabled {
+    .register-btn:disabled {
       opacity: 0.7;
       cursor: not-allowed;
     }
 
-    .forgot-password {
+    .login-link {
       text-align: center;
       margin-top: 10px;
     }
 
-    .forgot-password a {
+    .login-link a {
       color: white;
       text-decoration: none;
       font-size: 14px;
@@ -217,46 +242,87 @@ import { AuthService } from '../services/auth.service';
       transition: opacity 0.3s ease;
     }
 
-    .forgot-password a:hover {
+    .login-link a:hover {
       opacity: 1;
       text-decoration: underline;
     }
   `]
 })
-export class LoginPageComponent {
+export class RegisterUserPageComponent implements OnInit {
   userName = '';
+  email = '';
   password = '';
+  role: 'User' | 'Admin' = 'User';
   loading = false;
   error = '';
+  success = false;
+  createdId: number | null = null;
+  countdown = 3;
+  isPublicRegistration = false;
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private api: ApiService, private router: Router, private route: ActivatedRoute) {}
+
+  ngOnInit() {
+    // Detectar si es registro público o de administrador
+    this.isPublicRegistration = this.router.url === '/register';
+    
+    // Si es registro público, forzar rol de Usuario
+    if (this.isPublicRegistration) {
+      this.role = 'User';
+    }
+  }
 
   onSubmit() {
     this.error = '';
-    if (!this.userName || !this.password) { this.error = 'Complete usuario y contraseña'; return; }
+    this.success = false;
+    this.createdId = null;
+
+    if (!this.userName || !this.password) {
+      this.error = 'Usuario y contraseña son requeridos';
+      return;
+    }
+
     this.loading = true;
-    this.auth.login(this.userName, this.password).subscribe({
-      next: () => {
+    const payload = { userName: this.userName, password: this.password, email: this.email || undefined, role: this.role };
+    this.api.createUser(payload).subscribe({
+      next: (response: any) => {
         this.loading = false;
-        this.router.navigateByUrl('/');
+        this.success = true;
+        this.createdId = response.userId || response.id;
+        
+        // Iniciar countdown y redirección
+        this.startCountdownAndRedirect();
+        
+        // Limpiar formulario
+        this.userName = '';
+        this.email = '';
+        this.password = '';
+        this.role = 'User';
       },
-      error: () => {
+      error: (err) => {
         this.loading = false;
-        this.error = 'Credenciales inválidas';
+        this.error = err.error?.error || 'Error al crear usuario';
       }
     });
   }
 
-  goToRegister() {
-    console.log('Botón clickeado - Navegando a registro...');
-    try {
-      this.router.navigateByUrl('/register').then(success => {
-        console.log('Navegación exitosa:', success);
-      }).catch(error => {
-        console.error('Error en navegación:', error);
-      });
-    } catch (error) {
-      console.error('Error al intentar navegar:', error);
+  startCountdownAndRedirect() {
+    this.countdown = 3;
+    const interval = setInterval(() => {
+      this.countdown--;
+      if (this.countdown <= 0) {
+        clearInterval(interval);
+        this.router.navigate(['/login']);
+      }
+    }, 1000);
+  }
+
+  goHome() {
+    // Si es registro público, ir al login. Si es admin, ir al home
+    if (this.isPublicRegistration) {
+      this.router.navigate(['/login']);
+    } else {
+      this.router.navigate(['/']);
     }
   }
 }

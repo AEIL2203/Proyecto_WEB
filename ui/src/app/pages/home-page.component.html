@@ -1,6 +1,29 @@
 <!-- Barra de navegación -->
 <app-navigation-bar (sectionChange)="onSectionChange($event)"></app-navigation-bar>
 
+<!-- Panel de información del usuario (solo si está autenticado) -->
+<div class="user-info-panel" *ngIf="getCurrentUser()">
+  <div class="container">
+    <div class="user-welcome">
+      <span class="user-greeting">👋 Bienvenido, <strong>{{ getCurrentUser()?.userName }}</strong></span>
+      <span class="user-role" [class.admin-role]="isAdmin()">
+        {{ isAdmin() ? '👑 Administrador' : '👤 Usuario' }}
+      </span>
+      <div class="admin-actions" *ngIf="isAdmin()">
+        <a routerLink="/admin/users" class="admin-link">
+          👥 Ver Usuarios
+        </a>
+        <a routerLink="/admin/register-user" class="admin-link">
+          ➕ Registrar Usuario
+        </a>
+        <button (click)="logout()" class="logout-btn">
+          🚪 Cerrar Sesión
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="p-4">
 
   <!-- Sección: Crear Partidos -->
