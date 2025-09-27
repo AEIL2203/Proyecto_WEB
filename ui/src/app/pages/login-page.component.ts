@@ -238,7 +238,7 @@ export class LoginPageComponent {
     this.auth.login(this.userName, this.password).subscribe({
       next: () => {
         this.loading = false;
-        this.router.navigateByUrl('/');
+        this.router.navigateByUrl('/welcome');
       },
       error: () => {
         this.loading = false;

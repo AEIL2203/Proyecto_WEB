@@ -8,6 +8,13 @@
 
     <!-- Navigation Menu -->
     <div class="navbar-menu">
+      <a 
+        class="nav-item" 
+        [routerLink]="['/welcome']"
+        title="Ir a Bienvenido">
+        <span class="nav-icon">👋</span>
+        <span class="nav-text">Bienvenido</span>
+      </a>
       <button 
         class="nav-item" 
         [class.active]="activeSection === 'teams'"

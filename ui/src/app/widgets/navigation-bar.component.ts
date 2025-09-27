@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService, AuthUser } from '../services/auth.service';
 import { NotificationService } from '../services/notification.service';
 
 @Component({
   selector: 'app-navigation-bar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './navigation-bar.component.html',
   styleUrls: ['./navigation-bar.component.css']
 })
@@ -31,6 +31,8 @@ export class NavigationBarComponent {
   setActiveSection(section: string) {
     this.activeSection = section;
     this.sectionChange.emit(section);
+    // Ensure we are on the home route where sections are handled
+    this.router.navigate(['/'], { queryParams: { section } });
     
     // Mostrar notificación de cambio de sección
     const sectionNames = {

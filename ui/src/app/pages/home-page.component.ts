@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 
 import { AdminTeamRosterComponent } from '../widgets/admin-team-roster.component';
 import { NavigationBarComponent } from '../widgets/navigation-bar.component';
@@ -67,7 +67,13 @@ export class HomePageComponent implements OnInit {
 
   ngOnInit(): void {
     // Permite abrir directamente vistas desde URL: ?id=123&mode=controls|scoreboard
-    this.route.queryParamMap.subscribe(params => {
+    this.route.queryParamMap.subscribe((params: ParamMap) => {
+      // Cambiar sección si se solicita: ?section=teams|games|players
+      const section = (params.get('section') || '').toLowerCase();
+      if (section === 'teams' || section === 'games' || section === 'players') {
+        this.activeSection = section;
+      }
+
       const idStr = params.get('id');
       const mode = params.get('mode');
       const id = idStr ? +idStr : NaN;
