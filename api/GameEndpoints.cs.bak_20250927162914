@@ -33,8 +33,8 @@ public static class GameEndpoints
             var away = IsNullOrWhite(body?.Away) ? "Visitante" : body!.Away!.Trim();
             var quarterMs = body?.QuarterMs ?? 720000; // Default 12 min
             
-            // Validate quarter duration (10s=10000ms, 30s=30000ms, 5min=300000ms, 10min=600000ms, 12min=720000ms)
-            if (quarterMs != 10000 && quarterMs != 30000 && quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
+            // Validate quarter duration (30s=30000ms, 5min=300000ms, 10min=600000ms, 12min=720000ms)
+            if (quarterMs != 30000 && quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
                 quarterMs = 720000;
 
             using var c = Open(cs());
@@ -350,8 +350,8 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             
             var quarterMs = body.QuarterMs ?? 720000; // Default 12 min
             
-            // Validate quarter duration (10s=10000ms, 30s=30000ms, 5min=300000ms, 10min=600000ms, 12min=720000ms)
-            if (quarterMs != 10000 && quarterMs != 30000 && quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
+            // Validate quarter duration (30s=30000ms, 5min=300000ms, 10min=600000ms, 12min=720000ms)
+            if (quarterMs != 30000 && quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
                 quarterMs = 720000;
 
             using var c = Open(cs());
