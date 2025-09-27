@@ -394,30 +394,83 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
         g.MapPost("/teams/{teamId:int}/players", async (int teamId, [FromBody] CreatePlayerDto body) =>
         {
             var name = (body?.Name ?? "").Trim();
-            if (IsNullOrWhite(name)) return Results.BadRequest(new { error = "Name requerido." });
+            if (IsNullOrWhite(name)) return Results.BadRequest(new { error = "Nombre es requerido." });
+
+            // Validar altura si se proporciona
+            if (body?.Height.HasValue == true && (body.Height < 1.20m || body.Height > 2.50m))
+            {
+                return Results.BadRequest(new { error = "La estatura debe estar entre 1.20 y 2.50 metros." });
+            }
+
+            // Validar edad si se proporciona
+            if (body?.Age.HasValue == true && (body.Age < 10 || body.Age > 70))
+            {
+                return Results.BadRequest(new { error = "La edad debe estar entre 10 y 70 años." });
+            }
 
             try
             {
                 using var c = new SqlConnection(cs());
                 var id = await c.ExecuteScalarAsync<int>($@"
-                    INSERT INTO {T}Athletes(TeamId, Number, Name, Position, Active)
-                    OUTPUT INSERTED.PlayerId VALUES(@teamId,@num,@name,@pos,1);",
-                    new { teamId, num = body!.Number, name, pos = body!.Position });
+                    INSERT INTO {T}Athletes(
+                        TeamId, Number, Name, Position, 
+                        Height, Age, Nationality, Active)
+                    OUTPUT INSERTED.PlayerId 
+                    VALUES(
+                        @teamId, @num, @name, @pos, 
+                        @height, @age, @nationality, 1);",
+                    new { 
+                        teamId, 
+                        num = body!.Number, 
+                        name, 
+                        pos = body!.Position,
+                        height = body!.Height,
+                        age = body!.Age,
+                        nationality = body!.Nationality
+                    });
                 return Results.Created($"/api/players/{id}", new { playerId = id });
             }
-            catch (SqlException ex) when (ex.Number is 2601 or 2627) { return Results.BadRequest(new { error = "Dorsal duplicado." }); }
+            catch (SqlException ex) when (ex.Number is 2601 or 2627) 
+            { 
+                return Results.BadRequest(new { error = "Dorsal duplicado en el mismo equipo." }); 
+            }
         }).WithOpenApi();
 
         g.MapPatch("/players/{playerId:int}", async (int playerId, [FromBody] UpdatePlayerDto b) =>
         {
+            // Validar altura si se proporciona
+            if (b?.Height.HasValue == true && (b.Height < 1.20m || b.Height > 2.50m))
+            {
+                return Results.BadRequest(new { error = "La estatura debe estar entre 1.20 y 2.50 metros." });
+            }
+
+            // Validar edad si se proporciona
+            if (b?.Age.HasValue == true && (b.Age < 10 || b.Age > 70))
+            {
+                return Results.BadRequest(new { error = "La edad debe estar entre 10 y 70 años." });
+            }
+
             using var c = new SqlConnection(cs());
             var ok = await c.ExecuteAsync($@"
                 UPDATE {T}Athletes SET
                   Number=COALESCE(@Number,Number),
                   Name=COALESCE(@Name,Name),
                   Position=COALESCE(@Position,Position),
+                  Height=COALESCE(@Height,Height),
+                  Age=COALESCE(@Age,Age),
+                  Nationality=COALESCE(@Nationality,Nationality),
                   Active=COALESCE(@Active,Active)
-                WHERE PlayerId=@playerId;", new { playerId, b?.Number, b?.Name, b?.Position, b?.Active });
+                WHERE PlayerId=@playerId;", 
+                new { 
+                    playerId, 
+                    b?.Number, 
+                    b?.Name, 
+                    b?.Position,
+                    b?.Height,
+                    b?.Age,
+                    b?.Nationality,
+                    b?.Active 
+                });
             return ok > 0 ? Results.NoContent() : Results.NotFound();
         }).WithOpenApi();
 

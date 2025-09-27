@@ -6,61 +6,274 @@
   </app-section-header>
 
   <div class="card p-3">
-    <form (ngSubmit)="onSubmit()" #form="ngForm">
+    <form (ngSubmit)="onSubmit()" #form="ngForm" autocomplete="off">
       <div class="input-group" style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <div class="field">
-          <label>Equipo</label>
-          <select [(ngModel)]="model.teamId" name="teamId" required class="select">
+        <div class="field" [class.error]="form.submitted && !model.teamId">
+          <label for="teamId">Equipo <span class="required">*</span></label>
+          <select 
+            [(ngModel)]="model.teamId" 
+            name="teamId" 
+            id="teamId" 
+            required 
+            class="select"
+            [class.invalid]="form.submitted && !model.teamId">
             <option [ngValue]="null">Seleccione equipo…</option>
-            <option *ngFor="let t of teams; trackBy: trackTeam" [ngValue]="t.teamId">{{ t.name }}</option>
+            <option *ngFor="let t of teams; trackBy: trackTeam" [ngValue]="t.teamId">
+              {{ t.name }}
+            </option>
           </select>
+          <div class="error-message" *ngIf="form.submitted && !model.teamId">
+            El equipo es requerido
+          </div>
         </div>
-        <div class="field">
-          <label>Nombre</label>
-          <input [(ngModel)]="model.name" name="name" required placeholder="Ej. Juan Pérez" class="input" />
+        <div class="field" [class.error]="form.submitted && !model.name.trim()">
+          <label for="name">Nombre <span class="required">*</span></label>
+          <input 
+            [(ngModel)]="model.name" 
+            name="name" 
+            id="name" 
+            required 
+            placeholder="Ej. Juan Pérez" 
+            class="input" 
+            [class.invalid]="form.submitted && !model.name.trim()" />
+          <div class="error-message" *ngIf="form.submitted && !model.name.trim()">
+            El nombre es requerido
+          </div>
         </div>
       </div>
 
       <div class="input-group" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 10px;">
         <div class="field">
-          <label>Número</label>
-          <input [(ngModel)]="model.number" name="number" type="number" min="0" max="99" placeholder="0–99" class="input" />
+          <label for="number">Número</label>
+          <input 
+            [(ngModel)]="model.number" 
+            name="number" 
+            id="number" 
+            type="number" 
+            min="0" 
+            max="99" 
+            placeholder="0–99" 
+            class="input" />
+          <div class="hint">Opcional (0-99)</div>
         </div>
         <div class="field">
-          <label>Posición</label>
-          <select [(ngModel)]="model.position" name="position" class="select">
+          <label for="position">Posición</label>
+          <select 
+            [(ngModel)]="model.position" 
+            name="position" 
+            id="position" 
+            class="select">
             <option [ngValue]="null">Seleccione posición…</option>
-            <option [ngValue]="'base'">base</option>
-            <option [ngValue]="'escolta'">escolta</option>
-            <option [ngValue]="'alero'">alero</option>
-            <option [ngValue]="'ala-pivot'">ala-pivot</option>
-            <option [ngValue]="'pivot'">pivot</option>
+            <option [ngValue]="'base'">Base</option>
+            <option [ngValue]="'escolta'">Escolta</option>
+            <option [ngValue]="'alero'">Alero</option>
+            <option [ngValue]="'ala-pivot'">Ala-pívot</option>
+            <option [ngValue]="'pivot'">Pívot</option>
           </select>
+          <div class="hint">Opcional</div>
         </div>
         <div class="field">
-          <label>Estatura (cm)</label>
-          <input [(ngModel)]="model.height" name="height" type="number" min="120" max="250" placeholder="Ej. 185" class="input" />
+          <label for="height">Estatura (cm)</label>
+          <input 
+            [(ngModel)]="model.height" 
+            name="height" 
+            id="height" 
+            type="number" 
+            min="120" 
+            max="250" 
+            step="1"
+            placeholder="Ej. 185" 
+            class="input" />
+          <div class="hint">Opcional (120-250 cm)</div>
         </div>
       </div>
 
       <div class="input-group" style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
         <div class="field">
-          <label>Edad</label>
-          <input [(ngModel)]="model.age" name="age" type="number" min="10" max="70" placeholder="Ej. 24" class="input" />
+          <label for="age">Edad</label>
+          <input 
+            [(ngModel)]="model.age" 
+            name="age" 
+            id="age" 
+            type="number" 
+            min="10" 
+            placeholder="Ej. 24" 
+            class="input" />
+          <div class="hint">Opcional (10-70 años)</div>
         </div>
         <div class="field">
-          <label>Nacionalidad</label>
-          <input [(ngModel)]="model.nationality" name="nationality" placeholder="Ej. Mexicana" class="input" />
+          <label for="nationality">Nacionalidad</label>
+          <input 
+            [(ngModel)]="model.nationality" 
+            name="nationality" 
+            id="nationality"
+            placeholder="Ej. Mexicana" 
+            class="input" 
+            maxlength="100" />
+          <div class="hint">Opcional (máx. 100 caracteres)</div>
         </div>
       </div>
 
-      <div style="display:flex; gap: 10px; justify-content:center; margin-top: 16px;">
-        <button class="btn btn-success" type="submit" [disabled]="saving || !form.form.valid" style="min-width: 200px;">{{ saving ? 'Guardando…' : 'Guardar' }}</button>
-        <button class="btn btn-ghost" type="button" (click)="goBack()">Cancelar</button>
+      <div *ngIf="errorMsg" class="alert alert-danger mt-3" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        {{ errorMsg }}
       </div>
 
-      <div *ngIf="errorMsg" class="error" style="margin-top:8px;">{{ errorMsg }}</div>
-      <div class="text-xs muted" style="margin-top:6px;">Nota: Estatura, edad y nacionalidad se guardarán cuando el backend los soporte.</div>
+      <div class="form-actions" style="display:flex; gap: 10px; justify-content:center; margin-top: 24px;">
+        <button 
+          class="btn btn-primary" 
+          type="submit" 
+          [disabled]="saving || !form.form.valid" 
+          style="min-width: 200px;"
+          [class.loading]="saving">
+          <i class="fas fa-save me-2"></i>
+          {{ saving ? 'Guardando…' : 'Guardar Jugador' }}
+        </button>
+        <button 
+          class="btn btn-outline-secondary" 
+          type="button" 
+          (click)="goBack()"
+          [disabled]="saving">
+          <i class="fas fa-times me-2"></i>
+          Cancelar
+        </button>
+      </div>
     </form>
   </div>
 </div>
+
+<style>
+  .field {
+    margin-bottom: 1rem;
+  }
+  
+  .field label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  .field .required {
+    color: #dc3545;
+    margin-left: 0.25rem;
+  }
+  
+  .input, .select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    font-size: 1rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  
+  .input:focus, .select:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+  
+  .input.invalid, .select.invalid {
+    border-color: #dc3545;
+    padding-right: calc(1.5em + 0.75rem);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+  }
+  
+  .hint {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+  }
+  
+  .error-message {
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #dc3545;
+  }
+  
+  .form-actions {
+    border-top: 1px solid #dee2e6;
+    padding-top: 1.5rem;
+  }
+  
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    user-select: none;
+    border: 1px solid transparent;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    border-radius: 0.25rem;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, 
+                border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  
+  .btn:disabled {
+    opacity: 0.65;
+    pointer-events: none;
+  }
+  
+  .btn-primary {
+    color: #fff;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+  }
+  
+  .btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+  }
+  
+  .btn-outline-secondary {
+    color: #6c757d;
+    border-color: #6c757d;
+    background-color: transparent;
+  }
+  
+  .btn-outline-secondary:hover {
+    color: #fff;
+    background-color: #6c757d;
+    border-color: #6c757d;
+  }
+  
+  .alert {
+    position: relative;
+    padding: 1rem 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+  }
+  
+  .alert-danger {
+    color: #842029;
+    background-color: #f8d7da;
+    border-color: #f5c2c7;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .input-group {
+      grid-template-columns: 1fr !important;
+    }
+    
+    .form-actions {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .btn {
+      width: 100%;
+    }
+  }
+</style>

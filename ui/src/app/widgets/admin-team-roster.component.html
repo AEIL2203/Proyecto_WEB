@@ -63,16 +63,6 @@
 
     <!-- Alta de usuario -->
     <div class="card-subsection" style="margin-top: 14px;">
-      <div class="section-title" style="margin-bottom: 10px;">Agregar jugador</div>
-      <div class="input-group" style="margin-bottom: 10px;">
-        <input [(ngModel)]="pNumber" type="number" placeholder="N° (0–99 opcional)" class="input" />
-        <input [(ngModel)]="pPosition" placeholder="Posición (opcional)" class="input" />
-      </div>
-      <div style="display:flex; justify-content:center; width:100%;">
-        <button class="btn btn-success" [disabled]="saving" (click)="createPlayer()" style="min-width: 180px;">
-          {{ saving ? 'Guardando…' : 'Agregar' }}
-        </button>
-      </div>
       <div *ngIf="errorMsg" class="error">{{ errorMsg }}</div>
     </div>
   </div>
@@ -80,4 +70,3 @@
   <ng-template #noTeam>
     <div class="text-sm muted">Selecciona un equipo para gestionar su plantilla.</div>
   </ng-template>
-</div>
