@@ -15,10 +15,6 @@ import { AuthService, AuthUser } from '../services/auth.service';
       <div class="welcome-card">
         <div class="emoji">👋</div>
         <h1>¡Bienvenido{{ user?.userName ? ',' : '' }} <strong>{{ user?.userName }}</strong>!</h1>
-        <p class="subtitle">Selecciona una opción en el menú para comenzar</p>
-        <div class="quick-actions">
-          <a [routerLink]="['/']" [queryParams]="{ section: 'games' }" class="btn btn-primary">← Regresar a Crear Partidos</a>
-        </div>
       </div>
     </div>
   `,

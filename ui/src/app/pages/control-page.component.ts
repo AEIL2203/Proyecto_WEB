@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 
 import { ApiService, GameDetail } from '../services/api.service';
 import { NotificationService } from '../services/notification.service';
+import { ClockService } from '../services/clock.service';
 
 import { NavigationBarComponent } from '../widgets/navigation-bar.component';
 import { ScoreboardComponent } from '../widgets/scoreboard.component';
@@ -79,6 +80,7 @@ export class ControlPageComponent implements OnInit {
     private route: ActivatedRoute,
     private api: ApiService,
     private notifications: NotificationService,
+    private clock: ClockService,
   ) {}
 
   ngOnInit(): void {
@@ -88,6 +90,12 @@ export class ControlPageComponent implements OnInit {
       if (!isNaN(id) && id > 0) {
         this.gameId = id;
         this.reload();
+        // Si llega quarterMs por query, forzar ese valor para asegurar vista correcta (p.ej., 10s)
+        const qmsStr = this.route.snapshot.queryParamMap.get('quarterMs');
+        const qms = qmsStr ? +qmsStr : NaN;
+        if (!isNaN(qms) && qms > 0) {
+          this.clock.resetForNewQuarter(this.gameId, qms);
+        }
       }
     });
   }

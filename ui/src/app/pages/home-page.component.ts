@@ -14,6 +14,7 @@ import { ControlPanelComponent } from '../widgets/control-panel.component';
 import { ClockComponent } from '../widgets/clock.component';
 import { TeamRosterComponent } from '../widgets/team-roster.component';
 import { AuthService } from '../services/auth.service';
+import { ClockService } from '../services/clock.service';
 
 @Component({
   selector: 'app-home-page',
@@ -60,7 +61,8 @@ export class HomePageComponent implements OnInit {
     private api: ApiService, 
     private notifications: NotificationService,
     private route: ActivatedRoute,
-    private auth: AuthService
+    private auth: AuthService,
+    private clock: ClockService
   ) {
     this.reloadAll();
   }
@@ -114,16 +116,16 @@ export class HomePageComponent implements OnInit {
 
   // ===== API wrappers (lógica mínima) =====
   reloadAll() {
-    this.api.listTeams().subscribe((t) => (this.teams = t));
+    this.api.listTeams().subscribe((t: Team[]) => (this.teams = t));
     this.reloadGames();
   }
 
   reloadGames() {
-    this.api.listGames().subscribe((g) => (this.games = g));
+    this.api.listGames().subscribe((g: Game[]) => (this.games = g));
   }
 
   view(id: number) {
-    this.api.getGame(id).subscribe((d) => (this.detail = d));
+    this.api.getGame(id).subscribe((d: GameDetail) => (this.detail = d));
   }
 
   createGame(homeTeamId: number, awayTeamId: number) {
@@ -139,7 +141,7 @@ export class HomePageComponent implements OnInit {
     const awayTeam = this.teams.find(t => t.teamId === awayTeamId);
     
     this.api.pairGame(homeTeamId, awayTeamId, this.selectedQuarterMs).subscribe({
-      next: ({ gameId }) => {
+      next: ({ gameId }: { gameId: number }) => {
         this.reloadGames();
         // Mostrar notificación de éxito con nombres de equipos
         if (homeTeam && awayTeam) {
@@ -147,6 +149,10 @@ export class HomePageComponent implements OnInit {
             `🏀 Enfrentamiento creado: ${homeTeam.name} vs ${awayTeam.name}`,
             5000
           );
+        }
+        // Si el usuario seleccionó 10 segundos, forzar el reloj del servidor a 10s
+        if (this.selectedQuarterMs === 10000) {
+          this.clock.resetForNewQuarter(gameId, 10000);
         }
         //Abre el panel de control del partido recién creado
         this.view(gameId);
@@ -161,6 +167,7 @@ export class HomePageComponent implements OnInit {
   // Obtener texto descriptivo para la duración seleccionada
   getQuarterDurationText(): string {
     switch (this.selectedQuarterMs) {
+      case 10000: return '10 segundos';
       case 30000: return '30 segundos';
       case 300000: return '5 minutos';
       case 600000: return '10 minutos';
@@ -204,7 +211,7 @@ export class HomePageComponent implements OnInit {
   // Nuevos métodos para las vistas de partidos
   viewScoreboard(gameId: number) {
     this.viewMode = 'scoreboard';
-    this.api.getGame(gameId).subscribe((d) => {
+    this.api.getGame(gameId).subscribe((d: GameDetail) => {
       this.detail = d;
       this.notifications.showInfo(`📊 Mostrando marcador: ${d.game.homeTeam} vs ${d.game.awayTeam}`, 3000);
     });
@@ -212,7 +219,7 @@ export class HomePageComponent implements OnInit {
 
   viewControls(gameId: number) {
     this.viewMode = 'controls';
-    this.api.getGame(gameId).subscribe((d) => {
+    this.api.getGame(gameId).subscribe((d: GameDetail) => {
       this.detail = d;
       this.notifications.showInfo(`🎮 Panel de control activado: ${d.game.homeTeam} vs ${d.game.awayTeam}`, 3000);
     });
