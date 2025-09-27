@@ -13,6 +13,7 @@ import { ScoreboardComponent } from '../widgets/scoreboard.component';
 import { ControlPanelComponent } from '../widgets/control-panel.component';
 import { ClockComponent } from '../widgets/clock.component';
 import { TeamRosterComponent } from '../widgets/team-roster.component';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-home-page',
@@ -55,7 +56,12 @@ export class HomePageComponent implements OnInit {
   // Control de vista de detalles
   viewMode: 'scoreboard' | 'controls' | null = null;
 
-  constructor(private api: ApiService, private notifications: NotificationService, private route: ActivatedRoute) {
+  constructor(
+    private api: ApiService, 
+    private notifications: NotificationService,
+    private route: ActivatedRoute,
+    private auth: AuthService
+  ) {
     this.reloadAll();
   }
 
@@ -84,6 +90,20 @@ export class HomePageComponent implements OnInit {
   // Manejar cambio de sección desde la barra de navegación
   onSectionChange(section: string) {
     this.activeSection = section;
+  }
+
+  // Métodos para verificar permisos
+  isAdmin(): boolean {
+    return this.auth.isAdmin();
+  }
+
+  getCurrentUser() {
+    return this.auth.getUser();
+  }
+
+  logout() {
+    this.auth.logout();
+    // La navegación la manejará el guard automáticamente
   }
 
   // ===== API wrappers (lógica mínima) =====

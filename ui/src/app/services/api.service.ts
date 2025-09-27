@@ -244,4 +244,25 @@ export class ApiService {
     return this.http.get<any>(`${this.base}/games/${id}/fouls/summary`)
       .pipe(map(r => this.toCamel<FoulSummary>(r)));
   }
+
+  /* ========== Admin: Usuarios ========== */
+  createUser(payload: { userName: string; password: string; email?: string; role?: string }) {
+    return this.http.post(`${this.base}/auth/register`, payload);
+  }
+
+  getUsers() {
+    return this.http.get<any[]>(`${this.base}/admin/users`).pipe(
+      map(users => this.toCamel<any[]>(users))
+    );
+  }
+
+  updateUser(userId: number, payload: { userName?: string; email?: string; role?: string; active?: boolean }) {
+    return this.http.patch(`${this.base}/admin/users/${userId}`, payload).pipe(
+      map(user => this.toCamel<any>(user))
+    );
+  }
+
+  deleteUser(userId: number) {
+    return this.http.delete(`${this.base}/admin/users/${userId}`);
+  }
 }

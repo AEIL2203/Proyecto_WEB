@@ -104,6 +104,31 @@ app.MapPost("/api/auth/register-first", async (LoginDto reg, IPasswordHasher has
     return Results.Created($"/api/users/{id}", new { userId = id, userName = reg.UserName, role = "Admin" });
 }).WithOpenApi();
 
+// Endpoint público temporal para registro de usuarios
+app.MapPost("/api/auth/register", async (CreateUserPublicDto reg, IPasswordHasher hasher) =>
+{
+    if (string.IsNullOrWhiteSpace(reg.UserName) || string.IsNullOrWhiteSpace(reg.Password))
+        return Results.BadRequest(new { error = "UserName y Password requeridos." });
+    
+    var hash = hasher.Hash(reg.Password);
+    var email = string.IsNullOrWhiteSpace(reg.Email) ? null : reg.Email.Trim();
+    // TEMPORAL: Permitir crear admins desde registro público para testing
+    var role = string.IsNullOrWhiteSpace(reg.Role) ? "User" : reg.Role.Trim();
+    
+    using var c = new SqlConnection(getCs());
+    try
+    {
+        var id = await c.ExecuteScalarAsync<int>(
+            "INSERT INTO HoopsDB.core.Users(UserName, Email, PasswordHash, Role, Active) OUTPUT INSERTED.UserId VALUES(@u, @e, @h, @r, 1);",
+            new { u = reg.UserName.Trim(), e = email, h = hash, r = role });
+        return Results.Created($"/api/users/{id}", new { userId = id, userName = reg.UserName, email, role });
+    }
+    catch (SqlException ex) when (ex.Number is 2601 or 2627)
+    {
+        return Results.Conflict(new { error = "Usuario o email ya existe." });
+    }
+}).WithOpenApi();
+
 app.MapGameEndpoints(getCs);
 app.MapClockEndpoints(getCs);
 app.MapAdminEndpoints(getCs);
@@ -121,6 +146,7 @@ record ScoreDto(string Team, int Points, int? PlayerId, int? PlayerNumber);
 record FoulDto(string Team, int? PlayerId, int? PlayerNumber);
 record ClockResetDto(int? QuarterMs);
 record LoginDto(string UserName, string Password);
+record CreateUserPublicDto(string UserName, string Password, string? Email, string? Role);
 
 // Helper para resolver la cadena de conexión con el mismo orden de prioridad
 file static class ConnectionStringHelper

@@ -62,7 +62,24 @@ export class AuthService {
   }
 
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    const isAuth = !!token;
+    console.log('🔐 AuthService: isAuthenticated =', isAuth, 'token =', token ? 'exists' : 'null');
+    return isAuth;
+  }
+
+  isAdmin(): boolean {
+    const user = this.getUser();
+    const isAdminUser = user?.role === 'Admin';
+    console.log('👑 AuthService: isAdmin =', isAdminUser, 'user =', user);
+    return isAdminUser;
+  }
+
+  hasRole(role: string): boolean {
+    const user = this.getUser();
+    const hasRoleResult = user?.role === role;
+    console.log('🎭 AuthService: hasRole(' + role + ') =', hasRoleResult, 'user role =', user?.role);
+    return hasRoleResult;
   }
 
   private loadUser(): AuthUser | null {
