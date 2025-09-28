@@ -59,6 +59,7 @@ export class HomePageComponent implements OnInit {
   teams: Team[] = [];
   games: Game[] = [];
   detail: GameDetail | null = null;
+  teamsQuery: string = '';
 
   // Control de vista de detalles
   viewMode: 'scoreboard' | 'controls' | null = null;
@@ -72,9 +73,9 @@ export class HomePageComponent implements OnInit {
   ) {
     this.reloadAll();
   }
-
+  
   ngOnInit(): void {
-    // Permite abrir directamente vistas desde URL: ?id=123&mode=controls|scoreboard y ?section=teams|games|players
+    // Permite abrir directamente vistas desde URL: ?section=teams|games|players y ?id=123&mode=controls|scoreboard
     this.route.queryParamMap.subscribe((params: ParamMap) => {
       const section = (params.get('section') || '').toLowerCase();
       if (section === 'teams' || section === 'games' || section === 'players') {
@@ -85,20 +86,10 @@ export class HomePageComponent implements OnInit {
       const mode = params.get('mode');
       const id = idStr ? +idStr : NaN;
       if (!isNaN(id) && id > 0 && mode) {
-        if (mode === 'controls') {
-          this.viewControls(id);
-        } else if (mode === 'scoreboard') {
-          this.viewScoreboard(id);
-        }
+        if (mode === 'controls') this.viewControls(id);
+        else if (mode === 'scoreboard') this.viewScoreboard(id);
       }
     });
-  }
-
-  // ===== Helpers y validaciones =====
-  isTeamNameValid(value: string): boolean {
-    const v = (value ?? '').trim();
-    if (!v) return false;
-    return this.teamNameRegex.test(v);
   }
 
   // ===== Navegación y usuario (usado por el template) =====
@@ -106,6 +97,13 @@ export class HomePageComponent implements OnInit {
   isAdmin(): boolean { return this.auth.isAdmin(); }
   getCurrentUser() { return this.auth.getUser(); }
   logout() { this.auth.logout(); }
+
+  // ===== Helpers y validaciones =====
+  isTeamNameValid(value: string): boolean {
+    const v = (value ?? '').trim();
+    if (!v) return false;
+    return this.teamNameRegex.test(v);
+  }
 
   // URL y manejo de logos en listas
   teamLogoUrl(teamId: number): string { return this.api.getTeamLogoUrl(teamId); }
@@ -118,6 +116,13 @@ export class HomePageComponent implements OnInit {
   reloadAll() {
     this.api.listTeams().subscribe((t: Team[]) => (this.teams = t));
     this.reloadGames();
+  }
+  get filteredTeams(): Team[] {
+    const q = (this.teamsQuery ?? '').trim().toLowerCase();
+    const base = !q
+      ? this.teams
+      : this.teams.filter(t => t.name.toLowerCase().includes(q) || String(t.teamId).includes(q));
+    return [...base].sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
   }
 
   reloadGames() {
