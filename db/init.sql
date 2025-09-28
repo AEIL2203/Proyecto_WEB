@@ -113,6 +113,9 @@ BEGIN
         Number     TINYINT NULL,              -- dorsal opcional
         Name       NVARCHAR(100) NOT NULL,
         Position   NVARCHAR(20) NULL,         -- opcional (G/F/C)
+        Height     DECIMAL(3,2) NULL,         -- estatura en metros (ej: 1.95)
+        Age        TINYINT NULL,              -- edad del jugador
+        Nationality NVARCHAR(100) NULL,       -- nacionalidad del jugador
         Active     BIT NOT NULL DEFAULT 1,
         CreatedAt  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
     );
@@ -122,6 +125,17 @@ BEGIN
         ON core.Athletes(TeamId, Number)
         WHERE Number IS NOT NULL;
 END
+GO
+
+/* Extender Athletes con campos adicionales si no existen */
+IF COL_LENGTH('core.Athletes','Height') IS NULL
+    ALTER TABLE core.Athletes ADD Height DECIMAL(3,2) NULL; -- estatura en metros
+GO
+IF COL_LENGTH('core.Athletes','Age') IS NULL
+    ALTER TABLE core.Athletes ADD Age TINYINT NULL; -- edad del jugador
+GO
+IF COL_LENGTH('core.Athletes','Nationality') IS NULL
+    ALTER TABLE core.Athletes ADD Nationality NVARCHAR(100) NULL; -- nacionalidad del jugador
 GO
 
 /* FK de GameEvents -> Players (si no existe ya) */
