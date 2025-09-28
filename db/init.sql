@@ -28,6 +28,10 @@ GO
 IF COL_LENGTH('core.Club','LogoUrl') IS NULL
     ALTER TABLE core.Club ADD LogoUrl NVARCHAR(512) NULL;
 GO
+/* Agregar almacenamiento binario de logo si no existe */
+IF COL_LENGTH('core.Club','Logo') IS NULL
+    ALTER TABLE core.Club ADD Logo VARBINARY(MAX) NULL;
+GO
 
 /* =========================
    GAMES

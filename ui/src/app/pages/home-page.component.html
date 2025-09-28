@@ -217,6 +217,36 @@
             </div>
           </div>
         </div>
+        <!-- Ciudad (opcional) -->
+        <div class="input-group" style="margin-bottom: 10px;">
+          <div class="field" style="flex:1; min-width:260px;">
+            <label>Ciudad (opcional)</label>
+            <input [(ngModel)]="newTeamCity" placeholder="Ej. Ciudad de México" class="input" />
+          </div>
+        </div>
+        <!-- Logo PNG drag & drop -->
+        <div class="input-group" style="margin-bottom: 10px;">
+          <div class="field" style="flex:1; min-width:260px;">
+            <label>Logo (PNG, máx 2MB)</label>
+            <div
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)"
+              (drop)="onDrop($event)"
+              [class.dragging]="dragging"
+              style="border: 1px dashed rgba(255,255,255,0.2); border-radius: 8px; padding: 16px; text-align: center; cursor: pointer;"
+              (click)="fileInput.click()"
+            >
+              <div *ngIf="!newTeamLogoPreviewUrl" class="text-xs muted">
+                Arrastra aquí tu logo PNG o haz click para seleccionar
+              </div>
+              <div *ngIf="newTeamLogoPreviewUrl" style="display:flex; align-items:center; gap:10px; justify-content:center;">
+                <img [src]="newTeamLogoPreviewUrl" alt="Logo" style="width:48px; height:48px; object-fit:contain; background:#111; border-radius:6px;" />
+                <span class="text-xs">Logo cargado</span>
+              </div>
+            </div>
+            <input type="file" accept="image/png" #fileInput style="display:none" (change)="onFileSelected($event)" />
+          </div>
+        </div>
         <div style="display:flex; justify-content:center; width:100%; margin-bottom: 8px;">
           <button class="btn btn-success"
                   [disabled]="creating || !isTeamNameValid(newTeamName)"
@@ -236,8 +266,14 @@
         </div>
         <div style="max-height: 320px; overflow: auto; margin-top: 6px; border-radius: 10px;">
           <ul class="list-clean text-sm" style="margin:0;">
-            <li *ngFor="let t of teams" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
-              <span>{{ t.name }}</span>
+            <li *ngFor="let t of teams" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); gap:10px;">
+              <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                <img [src]="t.logoUrl || ('/api/teams/' + t.teamId + '/logo')" alt="logo" style="width:28px; height:28px; object-fit:contain; background:#111; border-radius:6px;" />
+                <div style="display:flex; flex-direction:column; min-width:0;">
+                  <span class="font-medium" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ t.name }}</span>
+                  <span *ngIf="t.city" class="text-xs muted" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ t.city }}</span>
+                </div>
+              </div>
               <span class="text-xs" style="opacity:.7; border:1px solid rgba(255,255,255,0.18); padding:2px 8px; border-radius:999px;">#{{t.teamId}}</span>
             </li>
           </ul>

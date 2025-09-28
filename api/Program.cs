@@ -53,6 +53,8 @@ if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 
 app.UseAuthentication();
 app.UseAuthorization();
+// Servir archivos estáticos desde wwwroot (para logos)
+app.UseStaticFiles();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
@@ -133,12 +135,20 @@ app.MapGameEndpoints(getCs);
 app.MapClockEndpoints(getCs);
 app.MapAdminEndpoints(getCs);
 
+// GET /api/teams/{teamId}/logo - servir logo desde DB como image/png
+app.MapGet("/api/teams/{teamId:int}/logo", async (int teamId) =>
+{
+    await using var c = new SqlConnection(getCs());
+    var bytes = await c.ExecuteScalarAsync<byte[]?>("SELECT Logo FROM HoopsDB.core.Club WHERE TeamId=@id;", new { id = teamId });
+    if (bytes is null || bytes.Length == 0) return Results.NotFound();
+    return Results.File(bytes, "image/png");
+}).WithOpenApi();
+
 app.Run();
 
 // DTOs (manténlo aquí o muévelo a Dtos.cs)
 record CreateGameDto(string? Home, string? Away, int? QuarterMs);
 record TeamCreateDto(string Name, string? City, string? LogoUrl);
-record UpdateTeamDto(string? Name, string? City, string? LogoUrl);
 record PairDto(int HomeTeamId, int AwayTeamId, int? QuarterMs);
 record CreatePlayerDto(string Name, byte? Number, string? Position);
 record UpdatePlayerDto(byte? Number, string? Name, string? Position, bool? Active);
