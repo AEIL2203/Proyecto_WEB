@@ -250,7 +250,17 @@ export class ApiService {
     );
   }
 
-  createPlayer(teamId: number, p: { name: string; number?: number; position?: string }) {
+  createPlayer(
+    teamId: number, 
+    p: { 
+      name: string; 
+      number?: number; 
+      position?: string;
+      height?: number;
+      age?: number;
+      nationality?: string;
+    }
+  ) {
     return this.http.post<{ playerId: number }>(`${this.base}/teams/${teamId}/players`, p);
   }
 

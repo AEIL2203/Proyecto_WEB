@@ -33,8 +33,8 @@ public static class GameEndpoints
             var away = IsNullOrWhite(body?.Away) ? "Visitante" : body!.Away!.Trim();
             var quarterMs = body?.QuarterMs ?? 720000; // Default 12 min
             
-            // Validate quarter duration (10s=10000ms, 30s=30000ms, 5min=300000ms, 10min=600000ms, 12min=720000ms)
-            if (quarterMs != 10000 && quarterMs != 30000 && quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
+            // Validate quarter duration (30s=30000ms, 5min=300000ms, 10min=600000ms, 12min=720000ms)
+            if (quarterMs != 30000 && quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
                 quarterMs = 720000;
 
             using var c = Open(cs());
@@ -350,8 +350,8 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             
             var quarterMs = body.QuarterMs ?? 720000; // Default 12 min
             
-            // Validate quarter duration (10s=10000ms, 30s=30000ms, 5min=300000ms, 10min=600000ms, 12min=720000ms)
-            if (quarterMs != 10000 && quarterMs != 30000 && quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
+            // Validate quarter duration (30s=30000ms, 5min=300000ms, 10min=600000ms, 12min=720000ms)
+            if (quarterMs != 30000 && quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
                 quarterMs = 720000;
 
             using var c = Open(cs());
@@ -394,83 +394,30 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
         g.MapPost("/teams/{teamId:int}/players", async (int teamId, [FromBody] CreatePlayerDto body) =>
         {
             var name = (body?.Name ?? "").Trim();
-            if (IsNullOrWhite(name)) return Results.BadRequest(new { error = "Nombre es requerido." });
-
-            // Validar altura si se proporciona
-            if (body?.Height.HasValue == true && (body.Height < 1.20m || body.Height > 2.50m))
-            {
-                return Results.BadRequest(new { error = "La estatura debe estar entre 1.20 y 2.50 metros." });
-            }
-
-            // Validar edad si se proporciona
-            if (body?.Age.HasValue == true && (body.Age < 10 || body.Age > 70))
-            {
-                return Results.BadRequest(new { error = "La edad debe estar entre 10 y 70 años." });
-            }
+            if (IsNullOrWhite(name)) return Results.BadRequest(new { error = "Name requerido." });
 
             try
             {
                 using var c = new SqlConnection(cs());
                 var id = await c.ExecuteScalarAsync<int>($@"
-                    INSERT INTO {T}Athletes(
-                        TeamId, Number, Name, Position, 
-                        Height, Age, Nationality, Active)
-                    OUTPUT INSERTED.PlayerId 
-                    VALUES(
-                        @teamId, @num, @name, @pos, 
-                        @height, @age, @nationality, 1);",
-                    new { 
-                        teamId, 
-                        num = body!.Number, 
-                        name, 
-                        pos = body!.Position,
-                        height = body!.Height,
-                        age = body!.Age,
-                        nationality = body!.Nationality
-                    });
+                    INSERT INTO {T}Athletes(TeamId, Number, Name, Position, Active)
+                    OUTPUT INSERTED.PlayerId VALUES(@teamId,@num,@name,@pos,1);",
+                    new { teamId, num = body!.Number, name, pos = body!.Position });
                 return Results.Created($"/api/players/{id}", new { playerId = id });
             }
-            catch (SqlException ex) when (ex.Number is 2601 or 2627) 
-            { 
-                return Results.BadRequest(new { error = "Dorsal duplicado en el mismo equipo." }); 
-            }
+            catch (SqlException ex) when (ex.Number is 2601 or 2627) { return Results.BadRequest(new { error = "Dorsal duplicado." }); }
         }).WithOpenApi();
 
         g.MapPatch("/players/{playerId:int}", async (int playerId, [FromBody] UpdatePlayerDto b) =>
         {
-            // Validar altura si se proporciona
-            if (b?.Height.HasValue == true && (b.Height < 1.20m || b.Height > 2.50m))
-            {
-                return Results.BadRequest(new { error = "La estatura debe estar entre 1.20 y 2.50 metros." });
-            }
-
-            // Validar edad si se proporciona
-            if (b?.Age.HasValue == true && (b.Age < 10 || b.Age > 70))
-            {
-                return Results.BadRequest(new { error = "La edad debe estar entre 10 y 70 años." });
-            }
-
             using var c = new SqlConnection(cs());
             var ok = await c.ExecuteAsync($@"
                 UPDATE {T}Athletes SET
                   Number=COALESCE(@Number,Number),
                   Name=COALESCE(@Name,Name),
                   Position=COALESCE(@Position,Position),
-                  Height=COALESCE(@Height,Height),
-                  Age=COALESCE(@Age,Age),
-                  Nationality=COALESCE(@Nationality,Nationality),
                   Active=COALESCE(@Active,Active)
-                WHERE PlayerId=@playerId;", 
-                new { 
-                    playerId, 
-                    b?.Number, 
-                    b?.Name, 
-                    b?.Position,
-                    b?.Height,
-                    b?.Age,
-                    b?.Nationality,
-                    b?.Active 
-                });
+                WHERE PlayerId=@playerId;", new { playerId, b?.Number, b?.Name, b?.Position, b?.Active });
             return ok > 0 ? Results.NoContent() : Results.NotFound();
         }).WithOpenApi();
 

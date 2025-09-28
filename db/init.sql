@@ -95,7 +95,6 @@ BEGIN
         QuarterMs   INT         NOT NULL DEFAULT 720000,  -- 12 min por cuarto (NBA)
         RemainingMs INT         NOT NULL DEFAULT 720000,  -- 12 min por cuarto (NBA)
         Running     BIT         NOT NULL DEFAULT 0,
-        StartedAt   DATETIME2   NULL,
         UpdatedAt   DATETIME2   NOT NULL DEFAULT SYSUTCDATETIME()
     );
 END
@@ -107,20 +106,46 @@ GO
 IF OBJECT_ID('core.Athletes') IS NULL
 BEGIN
     CREATE TABLE core.Athletes(
-        PlayerId   INT IDENTITY(1,1) PRIMARY KEY,
-        TeamId     INT NOT NULL
-                   REFERENCES core.Club(TeamId) ON DELETE CASCADE,
-        Number     TINYINT NULL,              -- dorsal opcional
-        Name       NVARCHAR(100) NOT NULL,
-        Position   NVARCHAR(20) NULL,         -- opcional (G/F/C)
-        Active     BIT NOT NULL DEFAULT 1,
-        CreatedAt  DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+        PlayerId     INT IDENTITY(1,1) PRIMARY KEY,
+        TeamId       INT NOT NULL
+                     REFERENCES core.Club(TeamId) ON DELETE CASCADE,
+        Number       TINYINT NULL,              -- dorsal opcional
+        Name         NVARCHAR(100) NOT NULL,
+        Position     NVARCHAR(20) NULL,         -- opcional (G/F/C)
+        Height       DECIMAL(3,2) NULL,         -- estatura en metros (ej: 1.95)
+        Age          TINYINT NULL,              -- edad del jugador
+        Nationality  NVARCHAR(100) NULL,        -- nacionalidad del jugador
+        Active       BIT NOT NULL DEFAULT 1,
+        CreatedAt    DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
     );
 
     /* Un dorsal no puede repetirse dentro del MISMO equipo (permite NULL) */
     CREATE UNIQUE INDEX UX_Athletes_Team_Number
         ON core.Athletes(TeamId, Number)
         WHERE Number IS NOT NULL;
+END
+ELSE
+BEGIN
+    /* Add Height column if it doesn't exist */
+    IF COL_LENGTH('core.Athletes', 'Height') IS NULL
+    BEGIN
+        ALTER TABLE core.Athletes
+        ADD Height DECIMAL(3,2) NULL;  -- estatura en metros (ej: 1.95)
+    END
+
+    /* Add Age column if it doesn't exist */
+    IF COL_LENGTH('core.Athletes', 'Age') IS NULL
+    BEGIN
+        ALTER TABLE core.Athletes
+        ADD Age TINYINT NULL;  -- edad del jugador
+    END
+
+    /* Add Nationality column if it doesn't exist */
+    IF COL_LENGTH('core.Athletes', 'Nationality') IS NULL
+    BEGIN
+        ALTER TABLE core.Athletes
+        ADD Nationality NVARCHAR(100) NULL;  -- nacionalidad del jugador
+    END
 END
 GO
 
