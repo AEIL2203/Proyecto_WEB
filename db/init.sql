@@ -28,6 +28,16 @@ GO
 IF COL_LENGTH('core.Club','LogoUrl') IS NULL
     ALTER TABLE core.Club ADD LogoUrl NVARCHAR(512) NULL;
 GO
+/* Extender Club con columnas para logo binario y metadatos si no existen */
+IF COL_LENGTH('core.Club','Logo') IS NULL
+    ALTER TABLE core.Club ADD Logo VARBINARY(MAX) NULL;
+GO
+IF COL_LENGTH('core.Club','LogoContentType') IS NULL
+    ALTER TABLE core.Club ADD LogoContentType NVARCHAR(128) NULL;
+GO
+IF COL_LENGTH('core.Club','LogoFileName') IS NULL
+    ALTER TABLE core.Club ADD LogoFileName NVARCHAR(255) NULL;
+GO
 
 /* =========================
    GAMES

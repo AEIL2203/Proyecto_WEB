@@ -38,13 +38,17 @@ export class HomePageComponent implements OnInit {
   q = '';
   creating = false;
   advancing = false;
-  
+
   // Control de secciones de navegación
   activeSection = 'games';
 
-  // NUEVO: nombre del equipo a crear
+  // Nombre del equipo a crear
   newTeamName = '';
   private teamNameRegex = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/;
+
+  // Logo del equipo (drag & drop o file input)
+  newTeamLogoFile: File | null = null;
+  newTeamLogoPreviewUrl: string | null = null;
 
   // Duración del cuarto seleccionada (en milisegundos)
   selectedQuarterMs = 720000; // Default 12 min
@@ -58,19 +62,18 @@ export class HomePageComponent implements OnInit {
   viewMode: 'scoreboard' | 'controls' | null = null;
 
   constructor(
-    private api: ApiService, 
+    private api: ApiService,
     private notifications: NotificationService,
     private route: ActivatedRoute,
     private auth: AuthService,
-    private clock: ClockService
+    private clock: ClockService,
   ) {
     this.reloadAll();
   }
 
   ngOnInit(): void {
-    // Permite abrir directamente vistas desde URL: ?id=123&mode=controls|scoreboard
+    // Permite abrir directamente vistas desde URL: ?id=123&mode=controls|scoreboard y ?section=teams|games|players
     this.route.queryParamMap.subscribe((params: ParamMap) => {
-      // Cambiar sección si se solicita: ?section=teams|games|players
       const section = (params.get('section') || '').toLowerCase();
       if (section === 'teams' || section === 'games' || section === 'players') {
         this.activeSection = section;
@@ -89,18 +92,18 @@ export class HomePageComponent implements OnInit {
     });
   }
 
+  // ===== Helpers y validaciones =====
   isTeamNameValid(value: string): boolean {
     const v = (value ?? '').trim();
     if (!v) return false;
     return this.teamNameRegex.test(v);
   }
 
-  // Manejar cambio de sección desde la barra de navegación
+  // ===== Navegación y usuario (usado por el template) =====
   onSectionChange(section: string) {
     this.activeSection = section;
   }
 
-  // Métodos para verificar permisos
   isAdmin(): boolean {
     return this.auth.isAdmin();
   }
@@ -111,7 +114,19 @@ export class HomePageComponent implements OnInit {
 
   logout() {
     this.auth.logout();
-    // La navegación la manejará el guard automáticamente
+  }
+
+  // URL del logo para la lista de equipos (plantilla)
+  teamLogoUrl(teamId: number): string {
+    return this.api.getTeamLogoUrl(teamId);
+  }
+
+  // Handler para ocultar imagen si falla la carga del logo
+  onTeamLogoError(ev: Event) {
+    const img = ev.target as HTMLImageElement | null;
+    if (img) {
+      img.style.display = 'none';
+    }
   }
 
   // ===== API wrappers (lógica mínima) =====
@@ -135,26 +150,19 @@ export class HomePageComponent implements OnInit {
       return;
     }
     this.creating = true;
-    
-    // Obtener nombres de los equipos para la notificación
+
     const homeTeam = this.teams.find(t => t.teamId === homeTeamId);
     const awayTeam = this.teams.find(t => t.teamId === awayTeamId);
-    
+
     this.api.pairGame(homeTeamId, awayTeamId, this.selectedQuarterMs).subscribe({
       next: ({ gameId }: { gameId: number }) => {
         this.reloadGames();
-        // Mostrar notificación de éxito con nombres de equipos
         if (homeTeam && awayTeam) {
-          this.notifications.showSuccess(
-            `🏀 Enfrentamiento creado: ${homeTeam.name} vs ${awayTeam.name}`,
-            5000
-          );
+          this.notifications.showSuccess(`🏀 Enfrentamiento creado: ${homeTeam.name} vs ${awayTeam.name}`, 5000);
         }
-        // Si el usuario seleccionó 10 segundos, forzar el reloj del servidor a 10s
         if (this.selectedQuarterMs === 10000) {
           this.clock.resetForNewQuarter(gameId, 10000);
         }
-        //Abre el panel de control del partido recién creado
         this.view(gameId);
       },
       error: () => {
@@ -164,7 +172,6 @@ export class HomePageComponent implements OnInit {
     });
   }
 
-  // Obtener texto descriptivo para la duración seleccionada
   getQuarterDurationText(): string {
     switch (this.selectedQuarterMs) {
       case 10000: return '10 segundos';
@@ -176,15 +183,78 @@ export class HomePageComponent implements OnInit {
     }
   }
 
+  // ===== Vistas de partidos =====
+  viewScoreboard(gameId: number) {
+    this.viewMode = 'scoreboard';
+    this.api.getGame(gameId).subscribe((d: GameDetail) => {
+      this.detail = d;
+      this.notifications.showInfo(`📊 Mostrando marcador: ${d.game.homeTeam} vs ${d.game.awayTeam}`, 3000);
+    });
+  }
+
+  viewControls(gameId: number) {
+    this.viewMode = 'controls';
+    this.api.getGame(gameId).subscribe((d: GameDetail) => {
+      this.detail = d;
+      this.notifications.showInfo(`🎮 Panel de control activado: ${d.game.homeTeam} vs ${d.game.awayTeam}`, 3000);
+    });
+  }
+
+  closeDetail() {
+    this.detail = null;
+    this.viewMode = null;
+    this.notifications.showInfo('📋 Volviendo a la lista de partidos', 2000);
+  }
+
+  // ===== Drag & Drop logo =====
+  onLogoFileSelected(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files && input.files[0];
+    if (file) this.setNewTeamLogo(file);
+  }
+
+  onLogoDragOver(ev: DragEvent) { ev.preventDefault(); }
+  onLogoDragLeave(ev: DragEvent) { ev.preventDefault(); }
+  onLogoDrop(ev: DragEvent) {
+    ev.preventDefault();
+    const files = ev.dataTransfer?.files;
+    if (files && files.length > 0) {
+      this.setNewTeamLogo(files[0]);
+    }
+  }
+
+  private setNewTeamLogo(file: File) {
+    const isImage = file.type.startsWith('image/');
+    const isUnder5MB = file.size <= 5 * 1024 * 1024;
+    if (!isImage || !isUnder5MB) {
+      this.notifications.showWarning('El logo debe ser una imagen de hasta 5 MB.');
+      return;
+    }
+    this.newTeamLogoFile = file;
+    if (this.newTeamLogoPreviewUrl) URL.revokeObjectURL(this.newTeamLogoPreviewUrl);
+    this.newTeamLogoPreviewUrl = URL.createObjectURL(file);
+  }
+
+  clearNewTeamLogo() {
+    this.newTeamLogoFile = null;
+    if (this.newTeamLogoPreviewUrl) URL.revokeObjectURL(this.newTeamLogoPreviewUrl);
+    this.newTeamLogoPreviewUrl = null;
+  }
+
   createTeam() {
     const name = this.newTeamName.trim();
     if (!name) return;
     if (!this.isTeamNameValid(name)) return;
 
     this.creating = true;
-    this.api.createTeam(name).subscribe({
+    const hasLogo = !!this.newTeamLogoFile;
+    const obs = hasLogo
+      ? this.api.createTeamWithLogo(name, null, this.newTeamLogoFile)
+      : this.api.createTeam(name);
+    obs.subscribe({
       next: () => {
         this.newTeamName = '';
+        this.clearNewTeamLogo();
         this.creating = false;
         this.reloadAll();
       },
@@ -206,28 +276,5 @@ export class HomePageComponent implements OnInit {
         complete: () => (this.advancing = false),
       });
     }
-  }
-
-  // Nuevos métodos para las vistas de partidos
-  viewScoreboard(gameId: number) {
-    this.viewMode = 'scoreboard';
-    this.api.getGame(gameId).subscribe((d: GameDetail) => {
-      this.detail = d;
-      this.notifications.showInfo(`📊 Mostrando marcador: ${d.game.homeTeam} vs ${d.game.awayTeam}`, 3000);
-    });
-  }
-
-  viewControls(gameId: number) {
-    this.viewMode = 'controls';
-    this.api.getGame(gameId).subscribe((d: GameDetail) => {
-      this.detail = d;
-      this.notifications.showInfo(`🎮 Panel de control activado: ${d.game.homeTeam} vs ${d.game.awayTeam}`, 3000);
-    });
-  }
-
-  closeDetail() {
-    this.detail = null;
-    this.viewMode = null;
-    this.notifications.showInfo('📋 Volviendo a la lista de partidos', 2000);
   }
 }

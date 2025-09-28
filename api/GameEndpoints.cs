@@ -326,6 +326,21 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return Results.Ok(rows);
         }).WithOpenApi();
 
+        // GET /api/teams/{teamId}/logo - devuelve el logo binario del equipo
+        g.MapGet("/teams/{teamId:int}/logo", async (int teamId) =>
+        {
+            using var c = new SqlConnection(cs());
+            var row = await c.QuerySingleOrDefaultAsync<(byte[]? Logo, string? Ct, string? Fn)>($@"SELECT Logo, LogoContentType AS Ct, LogoFileName AS Fn
+                FROM {T}Club WHERE TeamId=@teamId;", new { teamId });
+
+            if (row.Equals(default) || row.Logo is null || row.Logo.Length == 0)
+                return Results.NotFound();
+
+            var ct = string.IsNullOrWhiteSpace(row.Ct) ? "application/octet-stream" : row.Ct;
+            var fn = string.IsNullOrWhiteSpace(row.Fn) ? $"team-{teamId}-logo" : row.Fn;
+            return Results.File(row.Logo, contentType: ct, fileDownloadName: fn, enableRangeProcessing: false);
+        }).WithOpenApi();
+
         g.MapPost("/teams", async ([FromBody] TeamCreateDto body) =>
         {
             var name = (body?.Name ?? "").Trim();

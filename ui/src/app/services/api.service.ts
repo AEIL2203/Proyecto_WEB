@@ -202,6 +202,22 @@ export class ApiService {
     );
   }
 
+  // Crear equipo con logo (multipart)
+  createTeamWithLogo(name: string, city?: string | null, file?: File | null): Observable<{ teamId: number }> {
+    const fd = new FormData();
+    fd.append('name', name);
+    if (city) fd.append('city', city);
+    if (file) fd.append('logo', file, file.name);
+    return this.http.post<any>(`${this.base}/admin/teams/upload`, fd).pipe(
+      map(r => ({ teamId: r.teamId ?? r.TeamId }))
+    );
+  }
+
+  // Obtener URL del logo para <img>
+  getTeamLogoUrl(teamId: number): string {
+    return `${this.base}/teams/${teamId}/logo`;
+  }
+
 
   /* ========== Emparejar (crear juego desde IDs de equipo) ========== */
   pairGame(homeTeamId: number, awayTeamId: number, quarterMs?: number): Observable<{ gameId: number }> {
