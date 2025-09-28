@@ -32,6 +32,7 @@ import { ClockService } from '../services/clock.service';
     AdminTeamRosterComponent,
   ],
   templateUrl: './home-page.component.html',
+  styleUrls: ['./home-page.component.scss'],
 })
 export class HomePageComponent implements OnInit {
   // filtros / estado
@@ -60,6 +61,13 @@ export class HomePageComponent implements OnInit {
   games: Game[] = [];
   detail: GameDetail | null = null;
   teamsQuery: string = '';
+  
+  // Edición inline de equipos existentes
+  editingTeamId: number | null = null;
+  editTeamName: string = '';
+  editTeamCity: string | null = null;
+  editLogoFile: File | null = null;
+  editLogoPreviewUrl: string | null = null;
 
   // Control de vista de detalles
   viewMode: 'scoreboard' | 'controls' | null = null;
@@ -73,9 +81,9 @@ export class HomePageComponent implements OnInit {
   ) {
     this.reloadAll();
   }
-  
+
   ngOnInit(): void {
-    // Permite abrir directamente vistas desde URL: ?section=teams|games|players y ?id=123&mode=controls|scoreboard
+    // Permite abrir vistas desde URL: ?section=teams|games|players y ?id=&mode=
     this.route.queryParamMap.subscribe((params: ParamMap) => {
       const section = (params.get('section') || '').toLowerCase();
       if (section === 'teams' || section === 'games' || section === 'players') {
@@ -92,31 +100,32 @@ export class HomePageComponent implements OnInit {
     });
   }
 
-  // ===== Navegación y usuario (usado por el template) =====
+  // Navegación/usuario
   onSectionChange(section: string) { this.activeSection = section; }
   isAdmin(): boolean { return this.auth.isAdmin(); }
   getCurrentUser() { return this.auth.getUser(); }
   logout() { this.auth.logout(); }
 
-  // ===== Helpers y validaciones =====
+  // Validaciones
   isTeamNameValid(value: string): boolean {
     const v = (value ?? '').trim();
     if (!v) return false;
     return this.teamNameRegex.test(v);
   }
 
-  // URL y manejo de logos en listas
+  // Logo helpers
   teamLogoUrl(teamId: number): string { return this.api.getTeamLogoUrl(teamId); }
   onTeamLogoError(ev: Event) {
     const img = ev.target as HTMLImageElement | null;
     if (img) img.style.display = 'none';
   }
 
-  // ===== API wrappers (lógica mínima) =====
+  // Carga inicial
   reloadAll() {
     this.api.listTeams().subscribe((t: Team[]) => (this.teams = t));
     this.reloadGames();
   }
+  // Lista filtrada (por nombre o #ID) y ordenada alfabéticamente
   get filteredTeams(): Team[] {
     const q = (this.teamsQuery ?? '').trim().toLowerCase();
     const base = !q
@@ -124,7 +133,6 @@ export class HomePageComponent implements OnInit {
       : this.teams.filter(t => t.name.toLowerCase().includes(q) || String(t.teamId).includes(q));
     return [...base].sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
   }
-
   reloadGames() {
     this.api.listGames().subscribe((g: Game[]) => (this.games = g));
   }
@@ -160,6 +168,85 @@ export class HomePageComponent implements OnInit {
       },
       complete: () => (this.creating = false),
     });
+  }
+
+  // ===== Edición de equipos =====
+  startEditTeam(t: Team) {
+    this.editingTeamId = t.teamId;
+    this.editTeamName = t.name;
+    this.editTeamCity = (t as any).city ?? null;
+    this.editLogoFile = null;
+    if (this.editLogoPreviewUrl) { URL.revokeObjectURL(this.editLogoPreviewUrl); }
+    this.editLogoPreviewUrl = null;
+  }
+
+  cancelEditTeam() {
+    this.editingTeamId = null;
+    this.editTeamName = '';
+    this.editTeamCity = null;
+    this.editLogoFile = null;
+    if (this.editLogoPreviewUrl) { URL.revokeObjectURL(this.editLogoPreviewUrl); }
+    this.editLogoPreviewUrl = null;
+  }
+
+  onEditLogoSelected(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const isImage = file.type.startsWith('image/');
+    const isUnder5MB = file.size <= 5 * 1024 * 1024;
+    if (!isImage || !isUnder5MB) {
+      this.notifications.showWarning('El logo debe ser una imagen de hasta 5 MB.');
+      return;
+    }
+    this.editLogoFile = file;
+    if (this.editLogoPreviewUrl) URL.revokeObjectURL(this.editLogoPreviewUrl);
+    this.editLogoPreviewUrl = URL.createObjectURL(file);
+  }
+
+  saveEditTeam() {
+    const id = this.editingTeamId;
+    if (!id) return;
+    const name = (this.editTeamName ?? '').trim();
+    if (!name || !this.isTeamNameValid(name)) {
+      this.notifications.showWarning('Nombre inválido. Solo letras y espacios.');
+      return;
+    }
+    const city = (this.editTeamCity ?? '').trim();
+    const patch: any = {};
+    const original = this.teams.find(x => x.teamId === id);
+    if (!original) return;
+    if (name !== original.name) patch.name = name;
+    const origCity = (original as any).city ?? null;
+    if ((city || null) !== origCity) patch.city = city || null;
+
+    const finish = () => {
+      this.notifications.showSuccess('Equipo actualizado');
+      this.cancelEditTeam();
+      this.api.listTeams().subscribe((t: Team[]) => (this.teams = t));
+    };
+
+    const patch$ = Object.keys(patch).length > 0
+      ? this.api.updateTeam(id, patch)
+      : null;
+
+    if (patch$) {
+      patch$.subscribe({
+        next: () => {
+          if (this.editLogoFile) {
+            this.api.updateTeamLogo(id, this.editLogoFile).subscribe({ next: finish, error: () => this.notifications.showError('Error actualizando logo') });
+          } else finish();
+        },
+        error: (e) => {
+          if ((e?.status ?? 0) === 409) this.notifications.showError('Nombre duplicado');
+          else this.notifications.showError('Error actualizando equipo');
+        }
+      });
+    } else if (this.editLogoFile) {
+      this.api.updateTeamLogo(id, this.editLogoFile).subscribe({ next: finish, error: () => this.notifications.showError('Error actualizando logo') });
+    } else {
+      this.cancelEditTeam();
+    }
   }
 
   getQuarterDurationText(): string {

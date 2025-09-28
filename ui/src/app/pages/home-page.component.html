@@ -34,15 +34,15 @@
       description="Crear enfrentamientos y administrar partidos en tiempo real">
     </app-section-header>
     
-    <div class="grid-2" style="grid-template-columns: 1.4fr 2fr;">
+    <div class="grid-2-14-20">
       <!-- Crear partido -->
       <div class="card p-3">
-        <div class="card-header" style="display:block; text-align:center;">
+        <div class="card-header center">
           <div class="card-title">Crear enfrentamiento</div>
           <div class="card-subtitle">Crear un nuevo partido entre equipos</div>
         </div>
         
-        <div class="input-group" style="margin-bottom: 10px;">
+        <div class="input-group mb-10">
           <div class="field" style="flex:1; min-width:200px;">
             <label>Equipo local</label>
             <select #homeSel class="select">
@@ -74,12 +74,12 @@
           </div>
         </div>
         
-        <div style="display:flex; justify-content:center; width:100%; margin-bottom: 8px;">
+        <div class="centered-row" style="margin-bottom: 8px;">
           <button
             class="btn btn-success"
             [disabled]="creating"
             (click)="createGame(+homeSel.value, +awaySel.value)"
-            style="min-width: 200px;">
+            class="btn-wide">
             {{ creating ? 'Creando…' : 'Crear partido' }}
           </button>
         </div>
@@ -91,14 +91,14 @@
           <div class="card-title" style="margin-bottom: 4px;">Partidos existentes</div>
           <div class="card-subtitle" style="display:block;">Los últimos 50 partidos</div>
         </div>
-        <div style="max-height: 400px; overflow: auto; margin-top: 6px; border-radius: 10px;">
+        <div class="list-scroll">
           <ul class="list-clean text-sm" style="margin:0;">
-            <li *ngFor="let g of games | slice:0:50" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <li *ngFor="let g of games | slice:0:50" class="list-item-row">
               <div style="flex: 1;">
                 <div class="font-medium">{{ g.homeTeam }} vs {{ g.awayTeam }}</div>
                 <div class="text-xs muted">Cuarto {{ g.quarter }} • {{ g.homeScore }}-{{ g.awayScore }}</div>
               </div>
-              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <div class="row" style="gap: 0.5rem; flex-wrap: wrap;">
                 <span class="pill text-xs"
                       [ngClass]="{
                         'pill-finished': g.status==='FINISHED',
@@ -107,7 +107,7 @@
                       }">
                   {{ g.status | lowercase | titlecase }}
                 </span>
-                <div style="display: flex; gap: 0.25rem;">
+                <div class="row" style="gap: 0.25rem;">
                   <button class="btn btn-ghost btn-sm"
                           [routerLink]="['/display', g.gameId]"
                           title="Ver solo marcador">
@@ -136,13 +136,13 @@
 
     <!-- Vista solo Marcador -->
     <div class="card p-3" *ngIf="detail && viewMode === 'scoreboard'">
-      <div class="card-header" style="text-align:center; margin-bottom: 1rem;">
+      <div class="card-header center" style="margin-bottom: 1rem;">
         <div class="card-title">📊 Marcador del Partido</div>
         <div class="card-subtitle">{{ detail.game.homeTeam }} vs {{ detail.game.awayTeam }}</div>
       </div>
       <app-scoreboard [game]="detail.game"></app-scoreboard>
       
-      <div class="mt-4" style="text-align: center;">
+      <div class="mt-4 center">
         <button class="btn btn-ghost" (click)="closeDetail()">
           ← Volver a la lista
         </button>
@@ -151,7 +151,7 @@
 
     <!-- Vista Controles Completos -->
     <div class="card p-3" *ngIf="detail && viewMode === 'controls'">
-      <div class="card-header" style="text-align:center; margin-bottom: 1rem;">
+      <div class="card-header center" style="margin-bottom: 1rem;">
         <div class="card-title">🎮 Panel de Control</div>
         <div class="card-subtitle">{{ detail.game.homeTeam }} vs {{ detail.game.awayTeam }}</div>
       </div>
@@ -159,14 +159,14 @@
       <app-scoreboard [game]="detail.game"></app-scoreboard>
 
       <!-- Panel de control centrado -->
-      <div class="mt-4" style="display:grid; justify-items:center;">
-        <div style="width:100%; max-width:900px;">
+      <div class="mt-4 controls-center">
+        <div class="controls-container">
           <app-control-panel [game]="detail.game" (changed)="view(detail.game.gameId)"></app-control-panel>
         </div>
       </div>
 
       <!-- Cronómetro en bloque aparte full-width -->
-      <div class="mt-5 card p-3" style="margin-top: 1.25rem;">
+      <div class="mt-5 card p-3">
         <app-clock
           [gameId]="detail.game.gameId"
           [status]="detail.game.status"
@@ -176,11 +176,11 @@
         </app-clock>
       </div>
 
-      <div class="mt-5" style="display:grid; gap:1.25rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 1.25rem;">
-        <div class="card p-3" style="min-width:0;">
+      <div class="mt-5 rosters-grid">
+        <div class="card p-3 roster-card">
           <app-team-roster [gameId]="detail.game.gameId" side="HOME"></app-team-roster>
         </div>
-        <div class="card p-3" style="min-width:0;">
+        <div class="card p-3 roster-card">
           <app-team-roster [gameId]="detail.game.gameId" side="AWAY"></app-team-roster>
         </div>
       </div>
@@ -207,7 +207,7 @@
           <div class="card-title">Crear equipo</div>
           <div class="card-subtitle">Agregar un nuevo equipo al sistema</div>
         </div>
-        <div class="input-group" style="margin-bottom: 10px;">
+        <div class="input-group mb-10">
           <div class="field" style="flex:1; min-width:260px;">
             <label>Nombre del equipo</label>
             <input [(ngModel)]="newTeamName" placeholder="Ej. Los Tilines" class="input" />
@@ -232,26 +232,25 @@
               (dragover)="onLogoDragOver($event)"
               (dragleave)="onLogoDragLeave($event)"
               style="border: 2px dashed rgba(255,255,255,0.2); border-radius: 10px; padding: 14px; text-align:center; cursor:pointer; background: rgba(255,255,255,0.02);">
-              <div *ngIf="!newTeamLogoPreviewUrl" class="text-sm" style="opacity:.8;">
+              <div *ngIf="!newTeamLogoPreviewUrl" class="text-sm dropzone-help">
                 Arrastra y suelta una imagen aquí, o
                 <label style="color:#60a5fa; text-decoration: underline; cursor: pointer;">
                   selecciona un archivo
                   <input type="file" accept="image/*" (change)="onLogoFileSelected($event)" style="display:none;" />
                 </label>
               </div>
-              <div *ngIf="newTeamLogoPreviewUrl" style="display:flex; gap:10px; align-items:center; justify-content:center;">
-                <img [src]="newTeamLogoPreviewUrl" alt="preview" style="max-height:80px; border-radius:6px;" />
+              <div *ngIf="newTeamLogoPreviewUrl" class="preview-row">
+                <img [src]="newTeamLogoPreviewUrl" alt="preview" class="preview-img" />
                 <button type="button" class="btn btn-ghost" (click)="clearNewTeamLogo()">Quitar</button>
               </div>
               <div class="text-xs muted" style="margin-top:6px;">Formatos: PNG, JPG, WEBP, SVG. Máx 5 MB.</div>
             </div>
           </div>
         </div>
-        <div style="display:flex; justify-content:center; width:100%; margin-bottom: 8px;">
-          <button class="btn btn-success"
+        <div class="centered-row" style="margin-bottom: 8px;">
+          <button class="btn btn-success btn-wide"
                   [disabled]="creating || !isTeamNameValid(newTeamName)"
-                  (click)="createTeam()"
-                  style="min-width: 200px;">
+                  (click)="createTeam()">
             {{ creating ? 'Creando…' : 'Crear equipo' }}
           </button>
         </div>
@@ -268,17 +267,65 @@
             <input [(ngModel)]="teamsQuery" class="input" placeholder="Buscar equipo o #ID" />
           </div>
         </div>
-        <div style="max-height: 320px; overflow: auto; margin-top: 6px; border-radius: 10px;">
+        <div class="list-scroll-sm">
           <ul class="list-clean text-sm" style="margin:0;">
-            <li *ngFor="let t of filteredTeams" style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06);">
-              <div style="display:flex; align-items:center; gap:10px;">
-                <img [src]="teamLogoUrl(t.teamId)"
-                     alt="logo"
-                     (error)="onTeamLogoError($event)"
-                     style="width:28px; height:28px; object-fit:cover; border-radius:6px; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);" />
-                <span>{{ t.name }}</span>
+            <li *ngFor="let t of filteredTeams" class="list-item-row">
+              <!-- Modo lectura -->
+              <div *ngIf="editingTeamId !== t.teamId; else editTpl" class="row team-list-item">
+                <div class="row">
+                  <img [src]="teamLogoUrl(t.teamId)"
+                       alt="logo"
+                       (error)="onTeamLogoError($event)"
+                       class="team-logo-sm" />
+                  <div>
+                    <div>{{ t.name }}</div>
+                    <div class="text-xs" *ngIf="t.city" style="opacity:.8;">{{ t.city }}</div>
+                  </div>
+                </div>
+                <div class="row-end">
+                  <span class="text-xs pill pill-accent">#{{t.teamId}}</span>
+                  <button class="btn btn-sm btn-edit ml-auto" (click)="startEditTeam(t)">Editar</button>
+                </div>
               </div>
-              <span class="text-xs" style="opacity:.7; border:1px solid rgba(255,255,255,0.18); padding:2px 8px; border-radius:999px;">#{{t.teamId}}</span>
+  
+              <!-- Modo edición -->
+              <ng-template #editTpl>
+                <div class="card" style="padding:10px; background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:8px;">
+                  <div class="grid" style="grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div class="field">
+                      <label>Nombre</label>
+                      <input class="input" [(ngModel)]="editTeamName" />
+                      <div class="text-xs" style="margin-top:4px;">
+                        <span *ngIf="editTeamName.trim() && !isTeamNameValid(editTeamName)" style="color:#f87171;">Nombre inválido.</span>
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label>Ciudad</label>
+                      <input class="input" [(ngModel)]="editTeamCity" />
+                    </div>
+                    <div class="field" style="grid-column: 1 / -1;">
+                      <label>Logo</label>
+                      <div class="row">
+                        <img *ngIf="editLogoPreviewUrl; else currentLogo"
+                             [src]="editLogoPreviewUrl"
+                             alt="preview"
+                             class="team-logo-md" />
+                        <ng-template #currentLogo>
+                          <img [src]="teamLogoUrl(t.teamId)"
+                               alt="logo"
+                               (error)="onTeamLogoError($event)"
+                               class="team-logo-md" />
+                        </ng-template>
+                        <input type="file" accept="image/*" (change)="onEditLogoSelected($event)" />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row-end" style="justify-content:flex-end; gap:8px; margin-top:10px;">
+                    <button class="btn btn-secondary btn-sm btn-edit ml-auto" (click)="cancelEditTeam()">Cancelar</button>
+                    <button class="btn btn-primary btn-sm" [disabled]="!isTeamNameValid(editTeamName)" (click)="saveEditTeam()">Guardar</button>
+                  </div>
+                </div>
+              </ng-template>
             </li>
           </ul>
         </div>

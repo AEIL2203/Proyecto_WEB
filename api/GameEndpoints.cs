@@ -1,5 +1,6 @@
 using Dapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using System.Text.RegularExpressions;
 
@@ -322,7 +323,7 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
         g.MapGet("/teams", async () =>
         {
             using var c = new SqlConnection(cs());
-            var rows = await c.QueryAsync($"SELECT TeamId, Name, CreatedAt FROM {T}Club ORDER BY Name;");
+            var rows = await c.QueryAsync($"SELECT TeamId, Name, City, CreatedAt FROM {T}Club ORDER BY Name;");
             return Results.Ok(rows);
         }).WithOpenApi();
 
@@ -357,6 +358,53 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
                 return Results.Created($"/api/teams/{id}", new { teamId = id, name });
             }
             catch (SqlException ex) when (ex.Number is 2601 or 2627) { return Results.Conflict(new { error = "Nombre duplicado." }); }
+        }).WithOpenApi();
+
+        // PATCH /api/teams/{teamId} -> actualizar nombre y/o ciudad
+        g.MapPatch("/teams/{teamId:int}", async (int teamId, [FromBody] UpdateTeamDto b) =>
+        {
+            string? name = b?.Name?.Trim();
+            string? city = b?.City?.Trim();
+            if ((name is null || name.Length == 0) && (city is null))
+                return Results.BadRequest(new { error = "Nada para actualizar." });
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                var rx = new Regex("^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$");
+                if (!rx.IsMatch(name)) return Results.BadRequest(new { error = "Nombre inválido. Solo letras y espacios." });
+            }
+
+            try
+            {
+                using var c = new SqlConnection(cs());
+                var rows = await c.ExecuteAsync($@"UPDATE {T}Club SET
+                    Name = COALESCE(@name, Name),
+                    City = COALESCE(@city, City)
+                  WHERE TeamId=@teamId;", new { teamId, name, city });
+                return rows > 0 ? Results.NoContent() : Results.NotFound();
+            }
+            catch (SqlException ex) when (ex.Number is 2601 or 2627)
+            {
+                return Results.Conflict(new { error = "Nombre duplicado." });
+            }
+        }).WithOpenApi();
+
+        // POST /api/teams/{teamId}/logo -> actualizar logo
+        g.MapPost("/teams/{teamId:int}/logo", async (int teamId, IFormFile? logo) =>
+        {
+            if (logo == null || logo.Length == 0) return Results.BadRequest(new { error = "Archivo requerido." });
+            using var ms = new MemoryStream();
+            await logo.CopyToAsync(ms);
+            var bytes = ms.ToArray();
+            var ct = string.IsNullOrWhiteSpace(logo.ContentType) ? "application/octet-stream" : logo.ContentType;
+            var fn = Path.GetFileName(logo.FileName ?? $"team-{teamId}-logo");
+
+            using var c = new SqlConnection(cs());
+            var ok = await c.ExecuteAsync($@"UPDATE {T}Club SET 
+                    Logo=@logo, LogoContentType=@ct, LogoFileName=@fn
+                WHERE TeamId=@teamId;",
+                new { teamId, logo = bytes, ct, fn });
+            return ok > 0 ? Results.NoContent() : Results.NotFound();
         }).WithOpenApi();
 
         g.MapPost("/games/pair", async ([FromBody] PairDto body) =>

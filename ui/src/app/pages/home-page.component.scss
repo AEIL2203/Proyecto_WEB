@@ -1,0 +1,90 @@
+/* Home Page component styles */
+
+/* Layout helpers */
+.p-4 { padding: 1rem; }
+.mt-4 { margin-top: 1rem; }
+.mt-5 { margin-top: 1.25rem; }
+.mb-10 { margin-bottom: 10px; }
+
+.container { width: 100%; max-width: 1100px; margin: 0 auto; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+.grid-2-14-20 { display: grid; grid-template-columns: 1.4fr 2fr; gap: 1rem; align-items: start; }
+
+/* Cards */
+.card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; }
+.p-3 { padding: 0.75rem; }
+.card-header.center { text-align: center; }
+.card-title { font-weight: 600; }
+.card-subtitle { opacity: .8; font-size: .9em; }
+
+/* Lists */
+.list-clean { list-style: none; padding: 0; }
+.list-scroll { max-height: 400px; overflow: auto; margin-top: 6px; border-radius: 10px; }
+.list-scroll-sm { max-height: 320px; overflow: auto; margin-top: 6px; border-radius: 10px; }
+.list-item-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+
+/* Buttons */
+.btn-wide { min-width: 200px; }
+
+/* Images */
+.team-logo-sm { width: 28px; height: 28px; object-fit: cover; border-radius: 6px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); }
+.team-logo-md { width: 36px; height: 36px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); }
+
+/* Flex helpers */
+.row { display: flex; align-items: center; gap: 10px; }
+.row-end { display: flex; align-items: center; gap: 8px; }
+.centered-row { display: flex; justify-content: center; width: 100%; }
+.team-list-item { display: flex; justify-content: space-between; width: 100%; }
+
+/* Pills */
+.pill { border: 1px solid rgba(255,255,255,0.18); padding: 2px 8px; border-radius: 999px; }
+.pill-accent { border-color: rgba(17, 236, 83, 0.774); }
+
+/* Sections */
+.user-info-panel { background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.08); }
+.user-welcome { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 0; }
+.user-greeting { opacity: .95; }
+.user-role { padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18); }
+.admin-role { border-color: rgba(255,215,0,0.5); }
+.admin-actions { display: flex; gap: 10px; align-items: center; }
+.admin-link { text-decoration: underline; opacity: .9; }
+.logout-btn { border: 1px solid rgba(255,255,255,0.18); padding: 6px 10px; border-radius: 6px; }
+
+/* Text helpers */
+.muted { opacity: .7; }
+
+/* Botón Editar (equipos) */
+.btn-edit {
+  background-color: #10b981; /* verde esmeralda */
+  border: 1px solid #0ea5a4;
+  color: #0b1220;
+
+  &:hover {
+    background-color: #34d399;
+    border-color: #059669;
+  }
+
+  &:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+  }
+}
+
+/* Utilidad para empujar al extremo derecho dentro de contenedores flex */
+.ml-auto { margin-left: auto; }
+.flex-1 { flex: 1; }
+
+/* Dropzone */
+.dropzone { border: 2px dashed rgba(255,255,255,0.2); border-radius: 10px; padding: 14px; text-align: center; cursor: pointer; background: rgba(255,255,255,0.02); }
+.dropzone-help { opacity: .8; }
+.preview-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+.preview-img { max-height: 80px; border-radius: 6px; }
+
+/* Controls area */
+.controls-center { display: grid; justify-items: center; }
+.controls-container { width: 100%; max-width: 900px; }
+
+/* Rosters area */
+.rosters-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 1.25rem; }
+.roster-card { min-width: 0; }

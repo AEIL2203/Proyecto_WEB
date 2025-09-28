@@ -35,6 +35,7 @@ export interface GameDetail {
 export interface Team {
   teamId: number;
   name: string;
+  city?: string | null;
   createdAt: string; // ISO
 }
 
@@ -187,8 +188,9 @@ export class ApiService {
       map(rows => rows.map(r => ({
         teamId: r.TeamId ?? r.teamId,
         name: r.Name ?? r.name,
+        city: r.City ?? r.city ?? null,
         createdAt: this.ensureUtcIso((r.CreatedAt ?? r.createdAt) as string),
-      } satisfies Team)))
+      } as Team)))
     );
   }
 
@@ -216,6 +218,18 @@ export class ApiService {
   // Obtener URL del logo para <img>
   getTeamLogoUrl(teamId: number): string {
     return `${this.base}/teams/${teamId}/logo`;
+  }
+
+  // Actualizar equipo (nombre/ciudad)
+  updateTeam(teamId: number, patch: Partial<{ name: string; city: string | null }>) {
+    return this.http.patch(`${this.base}/teams/${teamId}`, patch);
+  }
+
+  // Actualizar logo del equipo
+  updateTeamLogo(teamId: number, file: File) {
+    const fd = new FormData();
+    fd.append('logo', file, file.name);
+    return this.http.post(`${this.base}/teams/${teamId}/logo`, fd);
   }
 
 
