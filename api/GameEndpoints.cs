@@ -390,7 +390,7 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
         }).WithOpenApi();
 
         // POST /api/teams/{teamId}/logo -> actualizar logo
-        g.MapPost("/teams/{teamId:int}/logo", async (int teamId, IFormFile? logo) =>
+        g.MapPost("/teams/{teamId:int}/logo", async (int teamId, [FromForm] IFormFile? logo) =>
         {
             if (logo == null || logo.Length == 0) return Results.BadRequest(new { error = "Archivo requerido." });
             using var ms = new MemoryStream();
@@ -405,7 +405,7 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
                 WHERE TeamId=@teamId;",
                 new { teamId, logo = bytes, ct, fn });
             return ok > 0 ? Results.NoContent() : Results.NotFound();
-        }).WithOpenApi();
+        }).DisableAntiforgery().WithOpenApi();
 
         g.MapPost("/games/pair", async ([FromBody] PairDto body) =>
         {
