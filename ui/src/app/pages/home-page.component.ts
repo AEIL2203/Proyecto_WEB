@@ -44,12 +44,14 @@ export class HomePageComponent implements OnInit {
 
   // Nombre del equipo a crear
   newTeamName = '';
+  newTeamCity: string | null = null;
+
   private teamNameRegex = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/;
 
   // Logo del equipo (drag & drop o file input)
   newTeamLogoFile: File | null = null;
   newTeamLogoPreviewUrl: string | null = null;
-
+  
   // Duración del cuarto seleccionada (en milisegundos)
   selectedQuarterMs = 720000; // Default 12 min
 
@@ -100,33 +102,16 @@ export class HomePageComponent implements OnInit {
   }
 
   // ===== Navegación y usuario (usado por el template) =====
-  onSectionChange(section: string) {
-    this.activeSection = section;
-  }
+  onSectionChange(section: string) { this.activeSection = section; }
+  isAdmin(): boolean { return this.auth.isAdmin(); }
+  getCurrentUser() { return this.auth.getUser(); }
+  logout() { this.auth.logout(); }
 
-  isAdmin(): boolean {
-    return this.auth.isAdmin();
-  }
-
-  getCurrentUser() {
-    return this.auth.getUser();
-  }
-
-  logout() {
-    this.auth.logout();
-  }
-
-  // URL del logo para la lista de equipos (plantilla)
-  teamLogoUrl(teamId: number): string {
-    return this.api.getTeamLogoUrl(teamId);
-  }
-
-  // Handler para ocultar imagen si falla la carga del logo
+  // URL y manejo de logos en listas
+  teamLogoUrl(teamId: number): string { return this.api.getTeamLogoUrl(teamId); }
   onTeamLogoError(ev: Event) {
     const img = ev.target as HTMLImageElement | null;
-    if (img) {
-      img.style.display = 'none';
-    }
+    if (img) img.style.display = 'none';
   }
 
   // ===== API wrappers (lógica mínima) =====
@@ -249,11 +234,12 @@ export class HomePageComponent implements OnInit {
     this.creating = true;
     const hasLogo = !!this.newTeamLogoFile;
     const obs = hasLogo
-      ? this.api.createTeamWithLogo(name, null, this.newTeamLogoFile)
-      : this.api.createTeam(name);
+      ? this.api.createTeamWithLogo(name, this.newTeamCity?.trim() || null, this.newTeamLogoFile)
+      : this.api.createTeam({ name, city: this.newTeamCity?.trim() || null });
     obs.subscribe({
       next: () => {
         this.newTeamName = '';
+        this.newTeamCity = null;
         this.clearNewTeamLogo();
         this.creating = false;
         this.reloadAll();
@@ -266,7 +252,7 @@ export class HomePageComponent implements OnInit {
   }
 
   // Hook desde <app-clock> cuando se agota el tiempo del cuarto
-  onExpire() {
+  onExpire(): void {
     const g = this.detail?.game;
     if (!g) return;
     if (g.status === 'IN_PROGRESS' && g.quarter < 4 && !this.advancing) {

@@ -194,8 +194,8 @@ export class ApiService {
 
   /* ========== Equipos ========== */
   createTeam(name: string): Observable<{ teamId: number; name: string }>;
-  createTeam(payload: { name: string }): Observable<{ teamId: number; name: string }>;
-  createTeam(arg: string | { name: string }): Observable<{ teamId: number; name: string }> {
+  createTeam(payload: { name: string; city?: string | null }): Observable<{ teamId: number; name: string }>;
+  createTeam(arg: string | { name: string; city?: string | null }): Observable<{ teamId: number; name: string }> {
     const body = typeof arg === 'string' ? { name: arg } : arg;
     return this.http.post<any>(`${this.base}/teams`, body).pipe(
       map(r => ({ teamId: r.teamId ?? r.TeamId, name: r.name ?? body.name }))

@@ -352,7 +352,8 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             try
             {
                 using var c = new SqlConnection(cs());
-                var id = await c.ExecuteScalarAsync<int>($"INSERT INTO {T}Club(Name) OUTPUT INSERTED.TeamId VALUES(@name);", new { name });
+                var city = string.IsNullOrWhiteSpace(body?.City) ? null : body!.City!.Trim();
+                var id = await c.ExecuteScalarAsync<int>($"INSERT INTO {T}Club(Name, City) OUTPUT INSERTED.TeamId VALUES(@name, @city);", new { name, city });
                 return Results.Created($"/api/teams/{id}", new { teamId = id, name });
             }
             catch (SqlException ex) when (ex.Number is 2601 or 2627) { return Results.Conflict(new { error = "Nombre duplicado." }); }
