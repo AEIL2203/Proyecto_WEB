@@ -1,5 +1,4 @@
 using System.Text.RegularExpressions;
-using System.IO;
 using Dapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -34,41 +33,22 @@ using Api.Auth.Services;
             return Results.Ok(rows);
         }).WithOpenApi();
 
-        // POST /api/admin/teams (multipart/form-data: name, city?, file?)
-        admin.MapPost("/teams", async (HttpRequest req) =>
+        // POST /api/admin/teams
+        admin.MapPost("/teams", async ([FromBody] TeamCreateDto body) =>
         {
-            if (!req.HasFormContentType)
-                return Results.BadRequest(new { error = "multipart/form-data requerido." });
-
-            var form = await req.ReadFormAsync();
-            var name = (form["name"].ToString() ?? string.Empty).Trim();
-            var city = string.IsNullOrWhiteSpace(form["city"]) ? null : form["city"].ToString().Trim();
-            var file = form.Files.GetFile("file");
-
+            var name = (body?.Name ?? "").Trim();
             if (IsNullOrWhite(name)) return Results.BadRequest(new { error = "Name requerido." });
             var rx = new Regex("^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$");
             if (!rx.IsMatch(name)) return Results.BadRequest(new { error = "Nombre inválido. Solo letras y espacios." });
-
-            byte[]? logoBytes = null;
-            if (file is not null && file.Length > 0)
-            {
-                if (!string.Equals(file.ContentType, "image/png", StringComparison.OrdinalIgnoreCase))
-                    return Results.BadRequest(new { error = "Solo PNG (image/png)." });
-                if (file.Length > 2 * 1024 * 1024)
-                    return Results.BadRequest(new { error = "Tamaño máximo 2MB." });
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                logoBytes = ms.ToArray();
-            }
 
             using var c = new SqlConnection(cs());
             try
             {
                 var id = await c.ExecuteScalarAsync<int>($@"
-                    INSERT INTO {T}Club(Name, City, Logo, LogoUrl)
+                    INSERT INTO {T}Club(Name, City, LogoUrl)
                     OUTPUT INSERTED.TeamId
-                    VALUES(@name, @city, @logo, NULL);
-                ", new { name, city, logo = logoBytes });
+                    VALUES(@name, @city, @logo);
+                ", new { name, city = string.IsNullOrWhiteSpace(body?.City) ? null : body!.City!.Trim(), logo = string.IsNullOrWhiteSpace(body?.LogoUrl) ? null : body!.LogoUrl!.Trim() });
                 return Results.Created($"/api/admin/teams/{id}", new { teamId = id });
             }
             catch (SqlException ex) when (ex.Number is 2601 or 2627)
@@ -262,6 +242,4 @@ using Api.Auth.Services;
     // DTOs locales
     public record CreateUserDto(string UserName, string Password, string? Email, string? Role);
     public record UpdateUserDto(string? UserName, string? Email, string? Role, bool? Active);
-    // DTO local para actualizar equipos (usado en PATCH /api/admin/teams/{teamId})
-    public record UpdateTeamDto(string? Name, string? City, string? LogoUrl);
 }
