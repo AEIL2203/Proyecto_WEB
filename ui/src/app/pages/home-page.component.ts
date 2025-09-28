@@ -15,7 +15,7 @@ import { ClockComponent } from '../widgets/clock.component';
 import { TeamRosterComponent } from '../widgets/team-roster.component';
 import { AuthService } from '../services/auth.service';
 import { ClockService } from '../services/clock.service';
-import { AudioService } from '../services/audio.service';
+
 @Component({
   selector: 'app-home-page',
   standalone: true,
@@ -45,12 +45,6 @@ export class HomePageComponent implements OnInit {
   // NUEVO: nombre del equipo a crear
   newTeamName = '';
   private teamNameRegex = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/;
-  // NUEVO: ciudad y logo del equipo
-  newTeamCity = '';
-  // Para opción 2 (logo en DB): guardamos el File y un preview local
-  newTeamLogoFile: File | null = null;
-  newTeamLogoPreviewUrl: string | null = null;
-  dragging = false;
 
   // Duración del cuarto seleccionada (en milisegundos)
   selectedQuarterMs = 720000; // Default 12 min
@@ -68,45 +62,118 @@ export class HomePageComponent implements OnInit {
     private notifications: NotificationService,
     private route: ActivatedRoute,
     private auth: AuthService,
-    private clock: ClockService,
-    private audio: AudioService
+    private clock: ClockService
   ) {
     this.reloadAll();
   }
 
-  // ====== Manejo de drag & drop / selección de archivo para logo (PNG) ======
-  onDragOver(e: DragEvent) { e.preventDefault(); this.dragging = true; }
-  onDragLeave(e: DragEvent) { e.preventDefault(); this.dragging = false; }
-  onDrop(e: DragEvent) {
-    e.preventDefault();
-    this.dragging = false;
-    const file = e.dataTransfer?.files?.[0];
-    if (file) this.setLogoFile(file);
-  }
-
-  onFileSelected(evt: Event) {
-    const input = evt.target as HTMLInputElement;
-    const file = input?.files?.[0];
-    if (file) this.setLogoFile(file);
-  }
-
-  private setLogoFile(file: File) {
-    if (file.type !== 'image/png') {
-      this.notifications.showWarning('Solo se acepta PNG');
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      this.notifications.showWarning('El PNG debe pesar <= 2MB');
-      return;
-    }
-    // Guardar file y generar previsualización local
-    if (this.newTeamLogoPreviewUrl) URL.revokeObjectURL(this.newTeamLogoPreviewUrl);
-    this.newTeamLogoFile = file;
-    this.newTeamLogoPreviewUrl = URL.createObjectURL(file);
-  }
-  
   ngOnInit(): void {
-    // Inicialización básica; si necesitas restaurar la lógica de query params, la reimplementamos luego.
+    // Permite abrir directamente vistas desde URL: ?id=123&mode=controls|scoreboard
+    this.route.queryParamMap.subscribe((params: ParamMap) => {
+      // Cambiar sección si se solicita: ?section=teams|games|players
+      const section = (params.get('section') || '').toLowerCase();
+      if (section === 'teams' || section === 'games' || section === 'players') {
+        this.activeSection = section;
+      }
+
+      const idStr = params.get('id');
+      const mode = params.get('mode');
+      const id = idStr ? +idStr : NaN;
+      if (!isNaN(id) && id > 0 && mode) {
+        if (mode === 'controls') {
+          this.viewControls(id);
+        } else if (mode === 'scoreboard') {
+          this.viewScoreboard(id);
+        }
+      }
+    });
+  }
+
+  isTeamNameValid(value: string): boolean {
+    const v = (value ?? '').trim();
+    if (!v) return false;
+    return this.teamNameRegex.test(v);
+  }
+
+  // Manejar cambio de sección desde la barra de navegación
+  onSectionChange(section: string) {
+    this.activeSection = section;
+  }
+
+  // Métodos para verificar permisos
+  isAdmin(): boolean {
+    return this.auth.isAdmin();
+  }
+
+  getCurrentUser() {
+    return this.auth.getUser();
+  }
+
+  logout() {
+    this.auth.logout();
+    // La navegación la manejará el guard automáticamente
+  }
+
+  // ===== API wrappers (lógica mínima) =====
+  reloadAll() {
+    this.api.listTeams().subscribe((t: Team[]) => (this.teams = t));
+    this.reloadGames();
+  }
+
+  reloadGames() {
+    this.api.listGames().subscribe((g: Game[]) => (this.games = g));
+  }
+
+  view(id: number) {
+    this.api.getGame(id).subscribe((d: GameDetail) => (this.detail = d));
+  }
+
+  createGame(homeTeamId: number, awayTeamId: number) {
+    if (!homeTeamId || !awayTeamId) return;
+    if (homeTeamId === awayTeamId) {
+      this.notifications.showWarning('No se puede jugar con el mismo equipo.');
+      return;
+    }
+    this.creating = true;
+    
+    // Obtener nombres de los equipos para la notificación
+    const homeTeam = this.teams.find(t => t.teamId === homeTeamId);
+    const awayTeam = this.teams.find(t => t.teamId === awayTeamId);
+    
+    this.api.pairGame(homeTeamId, awayTeamId, this.selectedQuarterMs).subscribe({
+      next: ({ gameId }: { gameId: number }) => {
+        this.reloadGames();
+        // Mostrar notificación de éxito con nombres de equipos
+        if (homeTeam && awayTeam) {
+          this.notifications.showSuccess(
+            `🏀 Enfrentamiento creado: ${homeTeam.name} vs ${awayTeam.name}`,
+            5000
+          );
+        }
+        // Si el usuario seleccionó 10 segundos, forzar el reloj del servidor a 10s
+        if (this.selectedQuarterMs === 10000) {
+          this.clock.resetForNewQuarter(gameId, 10000);
+        }
+        //Abre el panel de control del partido recién creado
+        this.view(gameId);
+      },
+      error: () => {
+        this.notifications.showError('Error al crear el enfrentamiento');
+      },
+      complete: () => (this.creating = false),
+    });
+  }
+
+  // Obtener texto descriptivo para la duración seleccionada
+  getQuarterDurationText(): string {
+    switch (this.selectedQuarterMs) {
+      case 10000: return '10 segundos';
+      case 30000: return '30 segundos';
+      case 300000: return '5 minutos';
+      case 600000: return '10 minutos';
+      case 720000: return '12 minutos';
+      default: return '12 minutos';
+    }
   }
 
   createTeam() {
@@ -115,40 +182,30 @@ export class HomePageComponent implements OnInit {
     if (!this.isTeamNameValid(name)) return;
 
     this.creating = true;
-    const doReset = () => {
-      this.newTeamName = '';
-      this.newTeamCity = '';
-      if (this.newTeamLogoPreviewUrl) {
-        URL.revokeObjectURL(this.newTeamLogoPreviewUrl);
-      }
-      this.newTeamLogoPreviewUrl = null;
-      this.newTeamLogoFile = null;
-      this.creating = false;
-      this.reloadAll();
-    };
-
-    // Si es admin y hay city/logo, usar endpoint admin con payload extendido
-    if (this.isAdmin()) {
-      // En opción 2 enviamos FormData con archivo directo a /api/admin/teams
-      const city = this.newTeamCity.trim() || null;
-      this.api.createTeamAdminForm(name, city, this.newTeamLogoFile).subscribe({
-        next: () => doReset(),
-        error: (err) => {
-          console.error('Error creando equipo (admin)', err);
-          this.creating = false;
-        }
-      });
-      return;
-    }
-
-    // Público: crear solo con nombre
     this.api.createTeam(name).subscribe({
-      next: () => doReset(),
+      next: () => {
+        this.newTeamName = '';
+        this.creating = false;
+        this.reloadAll();
+      },
       error: (err) => {
         console.error('Error creando equipo', err);
         this.creating = false;
       }
     });
+  }
+
+  // Hook desde <app-clock> cuando se agota el tiempo del cuarto
+  onExpire() {
+    const g = this.detail?.game;
+    if (!g) return;
+    if (g.status === 'IN_PROGRESS' && g.quarter < 4 && !this.advancing) {
+      this.advancing = true;
+      this.api.advance(g.gameId).subscribe({
+        next: () => this.view(g.gameId),
+        complete: () => (this.advancing = false),
+      });
+    }
   }
 
   // Nuevos métodos para las vistas de partidos
@@ -172,57 +229,5 @@ export class HomePageComponent implements OnInit {
     this.detail = null;
     this.viewMode = null;
     this.notifications.showInfo('📋 Volviendo a la lista de partidos', 2000);
-  }
-
-  // ===== Métodos auxiliares requeridos por el template =====
-  private reloadAll() {
-    this.api.listTeams().subscribe(ts => (this.teams = ts));
-    this.api.listGames().subscribe(gs => (this.games = gs));
-  }
-
-  isTeamNameValid(name: string): boolean {
-    return this.teamNameRegex.test(name.trim());
-  }
-
-  isAdmin(): boolean { return this.auth.isAdmin(); }
-  getCurrentUser() { return this.auth.getUser(); }
-  logout() { this.auth.logout(); }
-
-  onSectionChange(section: string) { this.activeSection = section; }
-
-  // Crear partido: usando nombres a partir de los IDs seleccionados
-  createGame(homeTeamId: number, awayTeamId: number) {
-    const home = this.teams.find(t => t.teamId === homeTeamId)?.name;
-    const away = this.teams.find(t => t.teamId === awayTeamId)?.name;
-    if (!home || !away) { this.notifications.showWarning('Selecciona equipos válidos'); return; }
-    this.creating = true;
-    this.api.createGame(home, away, this.selectedQuarterMs).subscribe({
-      next: ({ gameId }) => {
-        this.notifications.showSuccess('Partido creado');
-        this.view(gameId);
-      },
-      error: (err) => {
-        console.error(err);
-        this.notifications.showError('No se pudo crear el partido');
-      },
-      complete: () => { this.creating = false; this.reloadAll(); }
-    });
-  }
-
-  view(gameId: number) {
-    this.viewMode = 'controls';
-    this.api.getGame(gameId).subscribe((d: GameDetail) => {
-      this.detail = d;
-    });
-  }
-
-  onExpire() {
-    if (!this.detail) return;
-    const id = this.detail.game.gameId;
-    this.advancing = true;
-    this.api.advance(id).subscribe({
-      next: () => this.view(id),
-      complete: () => (this.advancing = false)
-    });
   }
 }

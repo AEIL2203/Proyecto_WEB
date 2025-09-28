@@ -35,8 +35,6 @@ export interface GameDetail {
 export interface Team {
   teamId: number;
   name: string;
-  city?: string;
-  logoUrl?: string;
   createdAt: string; // ISO
 }
 
@@ -189,58 +187,29 @@ export class ApiService {
       map(rows => rows.map(r => ({
         teamId: r.TeamId ?? r.teamId,
         name: r.Name ?? r.name,
-        city: r.City ?? r.city,
-        logoUrl: r.LogoUrl ?? r.logoUrl,
         createdAt: this.ensureUtcIso((r.CreatedAt ?? r.createdAt) as string),
       } satisfies Team)))
     );
   }
 
   /* ========== Equipos ========== */
-  createTeam(name: string): Observable<{ gameId: number } & any>;
-  createTeam(payload: { name: string }): Observable<{ gameId: number } & any>;
-  createTeam(arg: string | { name: string }): Observable<{ gameId: number } & any> {
+  createTeam(name: string): Observable<{ teamId: number; name: string }>;
+  createTeam(payload: { name: string }): Observable<{ teamId: number; name: string }>;
+  createTeam(arg: string | { name: string }): Observable<{ teamId: number; name: string }> {
     const body = typeof arg === 'string' ? { name: arg } : arg;
     return this.http.post<any>(`${this.base}/teams`, body).pipe(
       map(r => ({ teamId: r.teamId ?? r.TeamId, name: r.name ?? body.name }))
     );
   }
 
-  // Admin: crear equipo - acepta JSON (compatibilidad) o mejor: FormData multipart
-  createTeamAdmin(payload: { name: string; city?: string; logoUrl?: string }): Observable<{ teamId: number }> {
-    return this.http.post<any>(`${this.base}/admin/teams`, payload).pipe(
-      map(r => ({ teamId: r.teamId ?? r.TeamId }))
-    );
-  }
 
-  createTeamAdminForm(name: string, city?: string | null, file?: File | null): Observable<{ teamId: number }> {
-    const form = new FormData();
-    form.append('name', name);
-    if (city && city.trim()) form.append('city', city.trim());
-    if (file) form.append('file', file);
-    return this.http.post<any>(`${this.base}/admin/teams`, form).pipe(
-      map(r => ({ teamId: r.teamId ?? r.TeamId }))
+  /* ========== Emparejar (crear juego desde IDs de equipo) ========== */
+  pairGame(homeTeamId: number, awayTeamId: number, quarterMs?: number): Observable<{ gameId: number }> {
+    const body: any = { homeTeamId, awayTeamId };
+    if (quarterMs) body.quarterMs = quarterMs;
+    return this.http.post<any>(`${this.base}/games/pair`, body).pipe(
+      map(r => ({ gameId: r.gameId ?? r.GameId }))
     );
-  }
-
-  // Admin: listar equipos con City/LogoUrl
-  listTeamsAdmin(): Observable<Team[]> {
-    return this.http.get<any[]>(`${this.base}/admin/teams`).pipe(
-      map(rows => rows.map(r => ({
-        teamId: r.TeamId ?? r.teamId,
-        name: r.Name ?? r.name,
-        city: r.City ?? r.city,
-        logoUrl: r.LogoUrl ?? r.logoUrl,
-        createdAt: this.ensureUtcIso((r.CreatedAt ?? r.createdAt) as string),
-      } satisfies Team)))
-    );
-  }
-
-  // Upload de logo (PNG) - ya no se usa en opción 2 (logo en DB), mantenido por compatibilidad
-  uploadLogo(file: File): Observable<{ url: string }> {
-    const form = new FormData();
-    form.append('file', file);
-    return this.http.post<{ url: string }>(`${this.base}/uploads/logo`, form);
   }
 
   /* ========== Jugadores (por equipo) ========== */
@@ -250,7 +219,17 @@ export class ApiService {
     );
   }
 
-  createPlayer(teamId: number, p: { name: string; number?: number; position?: string }) {
+  createPlayer(
+    teamId: number, 
+    p: { 
+      name: string; 
+      number?: number; 
+      position?: string;
+      height?: number;
+      age?: number;
+      nationality?: string;
+    }
+  ) {
     return this.http.post<{ playerId: number }>(`${this.base}/teams/${teamId}/players`, p);
   }
 

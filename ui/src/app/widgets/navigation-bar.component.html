@@ -35,18 +35,22 @@
         class="nav-item" 
         [class.active]="activeSection === 'players'"
         (click)="setActiveSection('players')">
-        <span class="nav-icon">⚽</span>
+        <span class="nav-icon">👥</span>
         <span class="nav-text">Gestionar Jugadores</span>
+      </button>
+
+      <button 
+        class="nav-item" 
+        [class.active]="activeSection === 'tournaments'"
+        (click)="setActiveSection('tournaments')"
+        title="Gestionar Torneos">
+        <span class="nav-icon">🏆</span>
+        <span class="nav-text">Torneos</span>
       </button>
     </div>
 
     <!-- User Menu -->
     <div class="navbar-user">
-      <div class="user-info" *ngIf="user">
-        <span class="user-name"> Usuario: {{ user.userName }}</span>
-        <span class="user-role"> Rol: {{ user.role }}</span>
-      </div>
-      
       <button class="logout-btn" (click)="logout()" title="Cerrar Sesión">
         <span class="logout-icon">🚪</span>
         <span class="logout-text">Cerrar Sesión</span>

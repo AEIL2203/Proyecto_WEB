@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService, AuthUser } from '../services/auth.service';
@@ -12,9 +12,9 @@ import { NotificationService } from '../services/notification.service';
   styleUrls: ['./navigation-bar.component.css']
 })
 export class NavigationBarComponent {
+  @Input() activeSection = 'games'; // Sección activa por defecto
   @Output() sectionChange = new EventEmitter<string>();
   
-  activeSection = 'games'; // Sección activa por defecto
   user: AuthUser | null = null;
 
   constructor(
@@ -31,14 +31,21 @@ export class NavigationBarComponent {
   setActiveSection(section: string) {
     this.activeSection = section;
     this.sectionChange.emit(section);
-    // Ensure we are on the home route where sections are handled
-    this.router.navigate(['/'], { queryParams: { section } });
+    
+    // Navegar a la ruta correspondiente
+    if (section === 'tournaments') {
+      this.router.navigate(['/tournaments']);
+    } else {
+      // Para otras secciones, usa el sistema de queryParams
+      this.router.navigate(['/'], { queryParams: { section } });
+    }
     
     // Mostrar notificación de cambio de sección
     const sectionNames = {
       'teams': 'Crear Equipo',
       'games': 'Crear Partidos', 
-      'players': 'Gestionar Jugadores'
+      'players': 'Gestionar Jugadores',
+      'tournaments': 'Torneos'
     };
     
     const sectionName = sectionNames[section as keyof typeof sectionNames];

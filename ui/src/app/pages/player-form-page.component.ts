@@ -20,9 +20,9 @@ export class PlayerFormPageComponent {
     name: string;
     number?: number | null;
     position?: string | null;
-    height?: number | null;      // pendiente soporte backend
-    age?: number | null;         // pendiente soporte backend
-    nationality?: string | null; // pendiente soporte backend
+    height?: number | null;      // en centímetros
+    age?: number | null;         
+    nationality?: string | null; 
   } = {
     teamId: null,
     name: '',
@@ -75,16 +75,39 @@ export class PlayerFormPageComponent {
       num = this.model.number ?? undefined;
     }
 
+    // Validación de estatura si viene
+    let height: number | undefined;
+    if (this.model.height !== null && this.model.height !== undefined) {
+      if (this.model.height < 120 || this.model.height > 250) {
+        this.errorMsg = 'La estatura debe estar entre 120 y 250 cm';
+        return;
+      }
+      // Convertir a metros para el backend
+      height = this.model.height / 100;
+    }
+
+    // Validación de edad si viene
+    let age: number | undefined;
+    if (this.model.age !== null && this.model.age !== undefined) {
+      if (this.model.age < 10 || this.model.age > 70) {
+        this.errorMsg = 'La edad debe estar entre 10 y 70 años';
+        return;
+      }
+      age = this.model.age;
+    }
+
     this.saving = true;
     this.errorMsg = '';
     this.api.createPlayer(this.model.teamId, {
       name,
       number: num,
       position: (this.model.position || undefined) as any,
+      height: height,
+      age: age,
+      nationality: this.model.nationality || undefined
     }).subscribe({
       next: () => {
         this.notifications.showSuccess('Jugador creado correctamente');
-        // Nota: height, age, nationality quedan pendientes de backend
         this.router.navigate([''], { queryParams: { section: 'players' } });
       },
       error: (err) => {

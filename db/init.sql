@@ -21,18 +21,16 @@ BEGIN
 END
 GO
 
-/* Extender Club con City si no existe */
+/* Extender Club con City y LogoUrl si no existen */
 IF COL_LENGTH('core.Club','City') IS NULL
     ALTER TABLE core.Club ADD City NVARCHAR(100) NULL;
+GO
+IF COL_LENGTH('core.Club','LogoUrl') IS NULL
+    ALTER TABLE core.Club ADD LogoUrl NVARCHAR(512) NULL;
 GO
 /* Agregar almacenamiento binario de logo si no existe */
 IF COL_LENGTH('core.Club','Logo') IS NULL
     ALTER TABLE core.Club ADD Logo VARBINARY(MAX) NULL;
-GO
-
-/* Eliminar LogoUrl si existe (ya no se usa) */
-IF COL_LENGTH('core.Club','LogoUrl') IS NOT NULL
-    ALTER TABLE core.Club DROP COLUMN LogoUrl;
 GO
 
 /* =========================
