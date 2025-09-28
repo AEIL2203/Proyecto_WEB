@@ -10,7 +10,6 @@ import { RegisterUserPageComponent } from './pages/register-user-page.component'
 import { UserListPageComponent } from './pages/user-list-page.component';
 import { WelcomePageComponent } from './pages/welcome-page.component';
 import { ControlPageComponent } from './pages/control-page.component';
-import { TournamentPageComponent } from './pages/tournament-page.component';
 
 export const routes: Routes = [
   { path: '', component: HomePageComponent, canActivate: [authGuard] }, // tablero de control (protegido)
@@ -23,6 +22,5 @@ export const routes: Routes = [
   { path: 'display/:id', component: DisplayPageComponent },   // tablero público 
   { path: 'results', component: ResultsPageComponent },       // página de resultados
   { path: 'players/new', component: PlayerFormPageComponent, canActivate: [authGuard] }, // formulario de jugador (protegido)
-  { path: 'tournaments', component: TournamentPageComponent, canActivate: [authGuard] }, // gestión de torneos (protegido)
   { path: '**', redirectTo: '' }
 ];
