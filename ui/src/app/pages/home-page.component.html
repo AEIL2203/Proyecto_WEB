@@ -16,9 +16,6 @@
         <a routerLink="/admin/register-user" class="admin-link">
           ➕ Registrar Usuario
         </a>
-        <button (click)="logout()" class="logout-btn">
-          🚪 Cerrar Sesión
-        </button>
       </div>
     </div>
   </div>
@@ -34,9 +31,9 @@
       description="Crear enfrentamientos y administrar partidos en tiempo real">
     </app-section-header>
     
-    <div class="grid-2-14-20">
-      <!-- Crear partido -->
-      <div class="card p-3">
+    <div class="grid-2-14-20" [ngClass]="{'grid-1': !canCreate()}">
+      <!-- Crear partido - Solo Admin -->
+      <div class="card p-3" *ngIf="canCreate()">
         <div class="card-header center">
           <div class="card-title">Crear un partido</div>
           <div class="card-subtitle">Crear un nuevo partido entre equipos</div>
@@ -115,7 +112,8 @@
                   </button>
                   <button class="btn btn-ghost btn-sm"
                           [routerLink]="['/controls', g.gameId]"
-                          title="Abrir Panel de control">
+                          title="Abrir Panel de control"
+                          *ngIf="canControlGames()">
                     🎮 Controles
                   </button>
                   <button class="btn btn-ghost btn-sm" 
@@ -149,8 +147,8 @@
       </div>
     </div>
 
-    <!-- Vista Controles Completos -->
-    <div class="card p-3" *ngIf="detail && viewMode === 'controls'">
+    <!-- Vista Controles Completos - Solo Admin -->
+    <div class="card p-3" *ngIf="detail && viewMode === 'controls' && canControlGames()">
       <div class="card-header center" style="margin-bottom: 1rem;">
         <div class="card-title">🎮 Panel de Control</div>
         <div class="card-subtitle">{{ detail.game.homeTeam }} vs {{ detail.game.awayTeam }}</div>
@@ -200,9 +198,9 @@
       title="Gestión de Equipos" 
       description="Crear y administrar equipos del sistema">
     </app-section-header>
-    <div class="grid-2">
-      <!-- Crear equipo -->
-      <div class="card p-3">
+    <div class="grid-2" [ngClass]="{'grid-1': !canCreate()}">
+      <!-- Crear equipo - Solo Admin -->
+      <div class="card p-3" *ngIf="canCreate()">
         <div class="card-header" style="display:block; text-align:center;">
           <div class="card-title">Crear equipo</div>
           <div class="card-subtitle">Agregar un nuevo equipo al sistema</div>
@@ -284,8 +282,8 @@
                 </div>
                 <div class="row-end ml-auto">
                   <span class="text-xs pill pill-accent">#{{t.teamId}}</span>
-                  <button class="btn btn-sm btn-edit" (click)="startEditTeam(t)">Editar</button>
-                  <button class="btn btn-sm btn-danger" (click)="deleteTeam(t)">Eliminar</button>
+                  <button class="btn btn-sm btn-edit" (click)="startEditTeam(t)" *ngIf="canEdit()">Editar</button>
+                  <button class="btn btn-sm btn-danger" (click)="deleteTeam(t)" *ngIf="canDelete()">Eliminar</button>
                 </div>
               </div>
   
@@ -334,8 +332,8 @@
     </div>
   </section>
 
-  <!-- Sección: Gestionar Jugadores -->
-  <section class="container" *ngIf="activeSection === 'players'">
+  <!-- Sección: Gestionar Jugadores - Solo Admin -->
+  <section class="container" *ngIf="activeSection === 'players' && canEdit()">
     <app-section-header 
       icon="⚽" 
       title="Gestión de Jugadores" 

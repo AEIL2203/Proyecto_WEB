@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService, AuthUser } from '../services/auth.service';
 import { NotificationService } from '../services/notification.service';
+import { PermissionsService } from '../services/permissions.service';
 
 @Component({
   selector: 'app-navigation-bar',
@@ -20,7 +21,8 @@ export class NavigationBarComponent {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private notifications: NotificationService
+    private notifications: NotificationService,
+    private permissions: PermissionsService
   ) {
     // Suscribirse a cambios de usuario
     this.authService.userChanges().subscribe(user => {
@@ -57,5 +59,18 @@ export class NavigationBarComponent {
       // Redirigir al login
       this.router.navigate(['/login']);
     }
+  }
+
+  // Métodos de permisos
+  canCreate(): boolean {
+    return this.permissions.canCreate();
+  }
+
+  canEdit(): boolean {
+    return this.permissions.canEdit();
+  }
+
+  isAdmin(): boolean {
+    return this.permissions.isAdmin();
   }
 }

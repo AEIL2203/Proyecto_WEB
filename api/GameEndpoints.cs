@@ -11,6 +11,7 @@ public static class GameEndpoints
     public static void MapGameEndpoints(this WebApplication app, Func<string> cs)
     {
         var g = app.MapGroup("/api");
+        var adminG = app.MapGroup("/api").RequireAuthorization("Admin");
 
         // ===== Helpers mínimos =====
         static SqlConnection Open(string cs) { var c = new SqlConnection(cs); c.Open(); return c; }
@@ -28,7 +29,7 @@ public static class GameEndpoints
             return Results.Ok(rows);
         }).WithOpenApi();
 
-        g.MapPost("/games", async ([FromBody] CreateGameDto body) =>
+        adminG.MapPost("/games", async ([FromBody] CreateGameDto body) =>
         {
             var home = IsNullOrWhite(body?.Home) ? "Local" : body!.Home!.Trim();
             var away = IsNullOrWhite(body?.Away) ? "Visitante" : body!.Away!.Trim();
@@ -65,7 +66,7 @@ public static class GameEndpoints
             return Results.Ok(new { game, events });
         }).WithOpenApi();
 
-        g.MapPost("/games/{id:int}/start", async (int id) =>
+        adminG.MapPost("/games/{id:int}/start", async (int id) =>
         {
             using var c = Open(cs());
             using var tx = c.BeginTransaction();
@@ -78,7 +79,7 @@ public static class GameEndpoints
             return Results.NoContent();
         }).WithOpenApi();
 
-        g.MapPost("/games/{id:int}/advance-quarter", async (int id) =>
+        adminG.MapPost("/games/{id:int}/advance-quarter", async (int id) =>
         {
             using var c = Open(cs());
             using var tx = c.BeginTransaction();
@@ -139,7 +140,7 @@ public static class GameEndpoints
             tx.Commit(); return Results.NoContent();
         }).WithOpenApi();
 
-        g.MapPost("/games/{id:int}/finish", async (int id) =>
+        adminG.MapPost("/games/{id:int}/finish", async (int id) =>
         {
             using var c = Open(cs());
             using var tx = c.BeginTransaction();
@@ -150,7 +151,7 @@ public static class GameEndpoints
         }).WithOpenApi();
 
         // ===== Score / Foul / Undo =====
-        g.MapPost("/games/{id:int}/score", async (int id, [FromBody] ScoreDto b) =>
+        adminG.MapPost("/games/{id:int}/score", async (int id, [FromBody] ScoreDto b) =>
         {
             var team = (b?.Team ?? "").Trim().ToUpperInvariant();
             if (team is not ("HOME" or "AWAY") || b?.Points is not (1 or 2 or 3))
@@ -186,7 +187,7 @@ public static class GameEndpoints
             return Results.NoContent();
         }).WithOpenApi();
 
-        g.MapPost("/games/{id:int}/foul", async (int id, [FromBody] FoulDto b) =>
+        adminG.MapPost("/games/{id:int}/foul", async (int id, [FromBody] FoulDto b) =>
         {
             var team = (b?.Team ?? "").Trim().ToUpperInvariant();
             if (team is not ("HOME" or "AWAY")) return Results.BadRequest(new { error = "Team HOME/AWAY." });
@@ -206,7 +207,7 @@ public static class GameEndpoints
             return Results.NoContent();
         }).WithOpenApi();
 
-        g.MapPost("/games/{id:int}/remove-foul", async (int id, [FromBody] FoulDto b) =>
+        adminG.MapPost("/games/{id:int}/remove-foul", async (int id, [FromBody] FoulDto b) =>
         {
             var team = (b?.Team ?? "").Trim().ToUpperInvariant();
             if (team is not ("HOME" or "AWAY")) return Results.BadRequest(new { error = "Team HOME/AWAY." });
@@ -243,7 +244,7 @@ public static class GameEndpoints
             return Results.NoContent();
         }).WithOpenApi();
 
-        g.MapPost("/games/{id:int}/remove-score", async (int id, [FromBody] ScoreDto b) =>
+        adminG.MapPost("/games/{id:int}/remove-score", async (int id, [FromBody] ScoreDto b) =>
         {
             var team = (b?.Team ?? "").Trim().ToUpperInvariant();
             if (team is not ("HOME" or "AWAY")) return Results.BadRequest(new { error = "Team HOME/AWAY." });
@@ -287,7 +288,7 @@ public static class GameEndpoints
             return Results.NoContent();
         }).WithOpenApi();
 
-        g.MapPost("/games/{id:int}/undo", async (int id) =>
+        adminG.MapPost("/games/{id:int}/undo", async (int id) =>
         {
             using var c = Open(cs());
             using var tx = c.BeginTransaction();
@@ -342,7 +343,7 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return Results.File(row.Logo, contentType: ct, fileDownloadName: fn, enableRangeProcessing: false);
         }).WithOpenApi();
 
-        g.MapPost("/teams", async ([FromBody] TeamCreateDto body) =>
+        adminG.MapPost("/teams", async ([FromBody] TeamCreateDto body) =>
         {
             var name = (body?.Name ?? "").Trim();
             if (IsNullOrWhite(name)) return Results.BadRequest(new { error = "Name requerido." });
@@ -361,7 +362,7 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
         }).WithOpenApi();
 
         // DELETE /api/teams/{teamId} -> baja lógica (Active=0)
-        g.MapDelete("/teams/{teamId:int}", async (int teamId) =>
+        adminG.MapDelete("/teams/{teamId:int}", async (int teamId) =>
         {
             using var c = new SqlConnection(cs());
             var rows = await c.ExecuteAsync($"UPDATE {T}Club SET Active=0 WHERE TeamId=@teamId;", new { teamId });
@@ -369,7 +370,7 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
         }).WithOpenApi();
 
         // PATCH /api/teams/{teamId} -> actualizar nombre y/o ciudad
-        g.MapPatch("/teams/{teamId:int}", async (int teamId, [FromBody] UpdateTeamDto b) =>
+        adminG.MapPatch("/teams/{teamId:int}", async (int teamId, [FromBody] UpdateTeamDto b) =>
         {
             string? name = b?.Name?.Trim();
             string? city = b?.City?.Trim();
@@ -398,7 +399,7 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
         }).WithOpenApi();
 
         // POST /api/teams/{teamId}/logo -> actualizar logo
-        g.MapPost("/teams/{teamId:int}/logo", async (int teamId, [FromForm] IFormFile? logo) =>
+        adminG.MapPost("/teams/{teamId:int}/logo", async (int teamId, [FromForm] IFormFile? logo) =>
         {
             if (logo == null || logo.Length == 0) return Results.BadRequest(new { error = "Archivo requerido." });
             using var ms = new MemoryStream();
@@ -415,7 +416,7 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return ok > 0 ? Results.NoContent() : Results.NotFound();
         }).DisableAntiforgery().WithOpenApi();
 
-        g.MapPost("/games/pair", async ([FromBody] PairDto body) =>
+        adminG.MapPost("/games/pair", async ([FromBody] PairDto body) =>
         {
             if (body.HomeTeamId <= 0 || body.AwayTeamId <= 0 || body.HomeTeamId == body.AwayTeamId)
                 return Results.BadRequest(new { error = "Equipos inválidos." });
@@ -463,7 +464,7 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return Results.Ok(rows);
         }).WithOpenApi();
 
-        g.MapPost("/teams/{teamId:int}/players", async (int teamId, [FromBody] CreatePlayerDto body) =>
+        adminG.MapPost("/teams/{teamId:int}/players", async (int teamId, [FromBody] CreatePlayerDto body) =>
         {
             var name = (body?.Name ?? "").Trim();
             if (IsNullOrWhite(name)) return Results.BadRequest(new { error = "Nombre es requerido." });
@@ -508,7 +509,7 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             }
         }).WithOpenApi();
 
-        g.MapPatch("/players/{playerId:int}", async (int playerId, [FromBody] UpdatePlayerDto b) =>
+        adminG.MapPatch("/players/{playerId:int}", async (int playerId, [FromBody] UpdatePlayerDto b) =>
         {
             // Validar altura si se proporciona
             if (b?.Height.HasValue == true && (b.Height < 1.20m || b.Height > 2.50m))
@@ -546,7 +547,7 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return ok > 0 ? Results.NoContent() : Results.NotFound();
         }).WithOpenApi();
 
-        g.MapDelete("/players/{playerId:int}", async (int playerId) =>
+        adminG.MapDelete("/players/{playerId:int}", async (int playerId) =>
         {
             using var c = new SqlConnection(cs());
             var ok = await c.ExecuteAsync($"DELETE FROM {T}Athletes WHERE PlayerId=@playerId;", new { playerId });

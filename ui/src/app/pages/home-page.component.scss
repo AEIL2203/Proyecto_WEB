@@ -11,6 +11,43 @@
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
 .grid-2-14-20 { display: grid; grid-template-columns: 1.4fr 2fr; gap: 1rem; align-items: start; }
 
+/* Single column layout for users without create permissions */
+.grid-1 { display: grid; grid-template-columns: 1fr; gap: 1rem; align-items: start; }
+
+/* Responsive grids */
+@media (max-width: 1024px) {
+  .grid-2-14-20 {
+    grid-template-columns: 1fr 1.5fr;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .grid-2, .grid-2-14-20 {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .container {
+    max-width: 100%;
+    padding: 0 0.5rem;
+  }
+  
+  .p-4 {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .p-4 {
+    padding: 0.5rem;
+  }
+  
+  .container {
+    padding: 0 0.25rem;
+  }
+}
+
 /* Cards */
 .card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; }
 .p-3 { padding: 0.75rem; }
@@ -94,3 +131,186 @@
 /* Rosters area */
 .rosters-grid { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 1.25rem; }
 .roster-card { min-width: 0; }
+
+/* User info panel responsive */
+.user-info-panel {
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem 0;
+}
+
+.user-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.user-greeting {
+  font-size: 1.1rem;
+  color: white;
+}
+
+.user-role {
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
+
+.user-role.admin-role {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 0.5rem;
+  color: #6ee7b7;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.admin-link:hover {
+  background: rgba(16, 185, 129, 0.3);
+  border-color: rgba(16, 185, 129, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Responsive design for user panel */
+@media (max-width: 768px) {
+  .user-welcome {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .user-greeting {
+    font-size: 1rem;
+  }
+  
+  .admin-actions {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .admin-link {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-info-panel {
+    padding: 0.75rem 0;
+  }
+  
+  .user-greeting {
+    font-size: 0.95rem;
+  }
+  
+  .user-role {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+  }
+  
+  .admin-actions {
+    gap: 0.4rem;
+  }
+  
+  .admin-link {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.7rem;
+  }
+}
+
+/* Responsive buttons and forms */
+@media (max-width: 768px) {
+  .btn {
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+  }
+  
+  .btn-sm {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.7rem;
+  }
+  
+  .input, .select {
+    font-size: 0.9rem;
+    padding: 0.6rem;
+  }
+  
+  .field label {
+    font-size: 0.9rem;
+  }
+  
+  .card-title {
+    font-size: 1.1rem;
+  }
+  
+  .card-subtitle {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.8rem;
+  }
+  
+  .btn-sm {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.6rem;
+  }
+  
+  .input, .select {
+    font-size: 0.85rem;
+    padding: 0.5rem;
+  }
+  
+  .field label {
+    font-size: 0.85rem;
+  }
+  
+  .card-title {
+    font-size: 1rem;
+  }
+  
+  .card-subtitle {
+    font-size: 0.8rem;
+  }
+  
+  .input-group {
+    margin-bottom: 0.75rem;
+  }
+  
+  .list-item-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .row-end {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}

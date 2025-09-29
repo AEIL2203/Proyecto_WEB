@@ -1,50 +1,58 @@
-<div class="container" style="max-width: 720px; margin: 0 auto;">
-  <app-section-header 
-    icon="👤" 
-    title="Agregar nuevo jugador" 
-    description="Completa los datos del jugador y asígnalo a un equipo">
-  </app-section-header>
+<!-- Barra de navegación -->
+<app-navigation-bar></app-navigation-bar>
 
-  <div class="card p-3">
-    <form (ngSubmit)="onSubmit()" #form="ngForm" autocomplete="off">
-      <div class="input-group" style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <div class="field" [class.error]="form.submitted && !model.teamId">
-          <label for="teamId">Equipo <span class="required">*</span></label>
+<div class="modern-page-container">
+  <div class="modern-form-wrapper">
+    <!-- Header -->
+    <div class="modern-header">
+      <div class="header-icon">👤</div>
+      <h1 class="header-title">Agregar nuevo jugador</h1>
+      <p class="header-subtitle">Completa los datos del jugador y asígnalo a un equipo</p>
+    </div>
+
+    <!-- Formulario -->
+    <form (ngSubmit)="onSubmit()" #form="ngForm" autocomplete="off" class="modern-form">
+      <!-- Fila 1: Equipo y Nombre -->
+      <div class="form-row">
+        <div class="form-field" [class.error]="form.submitted && !model.teamId">
+          <label class="field-label">Equipo <span class="required">*</span></label>
           <select 
             [(ngModel)]="model.teamId" 
             name="teamId" 
             id="teamId" 
             required 
-            class="select"
+            class="field-input"
             [class.invalid]="form.submitted && !model.teamId">
             <option [ngValue]="null">Seleccione equipo…</option>
             <option *ngFor="let t of teams; trackBy: trackTeam" [ngValue]="t.teamId">
               {{ t.name }}
             </option>
           </select>
-          <div class="error-message" *ngIf="form.submitted && !model.teamId">
+          <div class="field-error" *ngIf="form.submitted && !model.teamId">
             El equipo es requerido
           </div>
         </div>
-        <div class="field" [class.error]="form.submitted && !model.name.trim()">
-          <label for="name">Nombre <span class="required">*</span></label>
+        
+        <div class="form-field" [class.error]="form.submitted && !model.name.trim()">
+          <label class="field-label">Nombre <span class="required">*</span></label>
           <input 
             [(ngModel)]="model.name" 
             name="name" 
             id="name" 
             required 
             placeholder="Ej. Juan Pérez" 
-            class="input" 
+            class="field-input" 
             [class.invalid]="form.submitted && !model.name.trim()" />
-          <div class="error-message" *ngIf="form.submitted && !model.name.trim()">
+          <div class="field-error" *ngIf="form.submitted && !model.name.trim()">
             El nombre es requerido
           </div>
         </div>
       </div>
 
-      <div class="input-group" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 10px;">
-        <div class="field">
-          <label for="number">Número</label>
+      <!-- Fila 2: Número, Posición, Estatura -->
+      <div class="form-row form-row-three">
+        <div class="form-field">
+          <label class="field-label">Número</label>
           <input 
             [(ngModel)]="model.number" 
             name="number" 
@@ -53,16 +61,17 @@
             min="0" 
             max="99" 
             placeholder="0–99" 
-            class="input" />
-          <div class="hint">Opcional (0-99)</div>
+            class="field-input" />
+          <div class="field-hint">Opcional (0-99)</div>
         </div>
-        <div class="field">
-          <label for="position">Posición</label>
+        
+        <div class="form-field">
+          <label class="field-label">Posición</label>
           <select 
             [(ngModel)]="model.position" 
             name="position" 
             id="position" 
-            class="select">
+            class="field-input">
             <option [ngValue]="null">Seleccione posición…</option>
             <option [ngValue]="'base'">Base</option>
             <option [ngValue]="'escolta'">Escolta</option>
@@ -70,10 +79,11 @@
             <option [ngValue]="'ala-pivot'">Ala-pívot</option>
             <option [ngValue]="'pivot'">Pívot</option>
           </select>
-          <div class="hint">Opcional</div>
+          <div class="field-hint">Opcional</div>
         </div>
-        <div class="field">
-          <label for="height">Estatura (cm)</label>
+        
+        <div class="form-field">
+          <label class="field-label">Estatura (cm)</label>
           <input 
             [(ngModel)]="model.height" 
             name="height" 
@@ -83,14 +93,15 @@
             max="250" 
             step="1"
             placeholder="Ej. 185" 
-            class="input" />
-          <div class="hint">Opcional (120-250 cm)</div>
+            class="field-input" />
+          <div class="field-hint">Opcional (120-250 cm)</div>
         </div>
       </div>
 
-      <div class="input-group" style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px;">
-        <div class="field">
-          <label for="age">Edad</label>
+      <!-- Fila 3: Edad y Nacionalidad -->
+      <div class="form-row">
+        <div class="form-field">
+          <label class="field-label">Edad</label>
           <input 
             [(ngModel)]="model.age" 
             name="age" 
@@ -98,43 +109,42 @@
             type="number" 
             min="10" 
             placeholder="Ej. 24" 
-            class="input" />
-          <div class="hint">Opcional (10-70 años)</div>
+            class="field-input" />
+          <div class="field-hint">Opcional (10-70 años)</div>
         </div>
-        <div class="field">
-          <label for="nationality">Nacionalidad</label>
+        
+        <div class="form-field">
+          <label class="field-label">Nacionalidad</label>
           <input 
             [(ngModel)]="model.nationality" 
             name="nationality" 
             id="nationality"
             placeholder="Ej. Mexicana" 
-            class="input" 
+            class="field-input" 
             maxlength="100" />
-          <div class="hint">Opcional (máx. 100 caracteres)</div>
+          <div class="field-hint">Opcional (máx. 100 caracteres)</div>
         </div>
       </div>
 
-      <div *ngIf="errorMsg" class="alert alert-danger mt-3" role="alert">
-        <i class="fas fa-exclamation-circle me-2"></i>
+      <!-- Error general -->
+      <div *ngIf="errorMsg" class="form-error-alert">
         {{ errorMsg }}
       </div>
 
-      <div class="form-actions" style="display:flex; gap: 10px; justify-content:center; margin-top: 24px;">
+      <!-- Botones de acción -->
+      <div class="form-actions">
         <button 
-          class="btn btn-primary" 
+          class="btn-primary" 
           type="submit" 
           [disabled]="saving || !form.form.valid" 
-          style="min-width: 200px;"
           [class.loading]="saving">
-          <i class="fas fa-save me-2"></i>
           {{ saving ? 'Guardando…' : 'Guardar Jugador' }}
         </button>
         <button 
-          class="btn btn-outline-secondary" 
+          class="btn-secondary" 
           type="button" 
           (click)="goBack()"
           [disabled]="saving">
-          <i class="fas fa-times me-2"></i>
           Cancelar
         </button>
       </div>
@@ -143,137 +153,267 @@
 </div>
 
 <style>
-  .field {
-    margin-bottom: 1rem;
+/* Modern Page Layout */
+.modern-page-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  padding: 2rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.modern-form-wrapper {
+  width: 100%;
+  max-width: 800px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Header Styles */
+.modern-header {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 197, 253, 0.05) 100%);
+  padding: 3rem 2rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.8;
+}
+
+.header-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 0.75rem 0;
+  letter-spacing: -0.025em;
+}
+
+.header-subtitle {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Form Styles */
+.modern-form {
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.form-row-three {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.5rem;
+}
+
+.required {
+  color: #f87171;
+  margin-left: 0.25rem;
+}
+
+.field-input {
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  color: white;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.field-input:focus {
+  border-color: rgba(59, 130, 246, 0.6);
+  background: rgba(15, 23, 42, 0.8);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.field-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.field-input.invalid {
+  border-color: rgba(239, 68, 68, 0.6);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.field-hint {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 0.25rem;
+}
+
+.field-error {
+  font-size: 0.875rem;
+  color: #f87171;
+  margin-top: 0.25rem;
+  font-weight: 500;
+}
+
+.form-error-alert {
+  padding: 1rem 1.25rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 0.75rem;
+  color: #fca5a5;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+/* Action Buttons */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-primary {
+  padding: 1rem 2.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border: none;
+  border-radius: 0.75rem;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  min-width: 180px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  padding: 1rem 2rem;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 140px;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  transform: translateY(-1px);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modern-page-container {
+    padding: 1rem 0.5rem;
   }
   
-  .field label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: #333;
+  .modern-header {
+    padding: 2rem 1.5rem;
   }
   
-  .field .required {
-    color: #dc3545;
-    margin-left: 0.25rem;
+  .header-title {
+    font-size: 1.75rem;
   }
   
-  .input, .select {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
+  .header-subtitle {
     font-size: 1rem;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   }
   
-  .input:focus, .select:focus {
-    border-color: #86b7fe;
-    outline: 0;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  .modern-form {
+    padding: 2rem 1.5rem;
+    gap: 1.5rem;
   }
   
-  .input.invalid, .select.invalid {
-    border-color: #dc3545;
-    padding-right: calc(1.5em + 0.75rem);
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right calc(0.375em + 0.1875rem) center;
-    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+  .form-row,
+  .form-row-three {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
   
-  .hint {
-    font-size: 0.75rem;
-    color: #6c757d;
-    margin-top: 0.25rem;
-  }
-  
-  .error-message {
-    width: 100%;
-    margin-top: 0.25rem;
-    font-size: 0.875em;
-    color: #dc3545;
+  .field-input {
+    padding: 0.875rem 1rem;
   }
   
   .form-actions {
-    border-top: 1px solid #dee2e6;
-    padding-top: 1.5rem;
+    flex-direction: column;
+    gap: 0.75rem;
   }
   
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 500;
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: middle;
-    user-select: none;
-    border: 1px solid transparent;
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
-    line-height: 1.5;
-    border-radius: 0.25rem;
-    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, 
-                border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .modern-header {
+    padding: 1.5rem 1rem;
   }
   
-  .btn:disabled {
-    opacity: 0.65;
-    pointer-events: none;
+  .header-icon {
+    font-size: 2.5rem;
   }
   
-  .btn-primary {
-    color: #fff;
-    background-color: #0d6efd;
-    border-color: #0d6efd;
+  .header-title {
+    font-size: 1.5rem;
   }
   
-  .btn-primary:hover {
-    background-color: #0b5ed7;
-    border-color: #0a58ca;
+  .header-subtitle {
+    font-size: 0.9rem;
   }
   
-  .btn-outline-secondary {
-    color: #6c757d;
-    border-color: #6c757d;
-    background-color: transparent;
+  .modern-form {
+    padding: 1.5rem 1rem;
   }
-  
-  .btn-outline-secondary:hover {
-    color: #fff;
-    background-color: #6c757d;
-    border-color: #6c757d;
-  }
-  
-  .alert {
-    position: relative;
-    padding: 1rem 1rem;
-    margin-bottom: 1rem;
-    border: 1px solid transparent;
-    border-radius: 0.25rem;
-  }
-  
-  .alert-danger {
-    color: #842029;
-    background-color: #f8d7da;
-    border-color: #f5c2c7;
-  }
-  
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .input-group {
-      grid-template-columns: 1fr !important;
-    }
-    
-    .form-actions {
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    
-    .btn {
-      width: 100%;
-    }
-  }
+}
 </style>

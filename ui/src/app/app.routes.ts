@@ -16,13 +16,13 @@ export const routes: Routes = [
   { path: '', component: HomePageComponent, canActivate: [authGuard] }, // tablero de control (protegido)
   { path: 'welcome', component: WelcomePageComponent, canActivate: [authGuard] }, // pantalla de bienvenida (protegido)
   { path: 'tournament', component: TournamentPageComponent, canActivate: [authGuard] }, // página de torneos (protegido)
-  { path: 'controls/:id', component: ControlPageComponent, canActivate: [authGuard] }, // página dedicada de controles (protegido)
+  { path: 'controls/:id', component: ControlPageComponent, canActivate: [adminGuard] }, // página dedicada de controles (solo admin)
   { path: 'login', component: LoginPageComponent },
   { path: 'register', component: RegisterUserPageComponent }, // registro público
   { path: 'admin/users', component: UserListPageComponent, canActivate: [adminGuard] }, // lista de usuarios (solo admin)
   { path: 'admin/register-user', component: RegisterUserPageComponent, canActivate: [adminGuard] }, // solo administradores
   { path: 'display/:id', component: DisplayPageComponent },   // tablero público 
   { path: 'results', component: ResultsPageComponent },       // página de resultados
-  { path: 'players/new', component: PlayerFormPageComponent, canActivate: [authGuard] }, // formulario de jugador (protegido)
+  { path: 'players/new', component: PlayerFormPageComponent, canActivate: [adminGuard] }, // formulario de jugador (solo admin)
   { path: '**', redirectTo: '' }
 ];

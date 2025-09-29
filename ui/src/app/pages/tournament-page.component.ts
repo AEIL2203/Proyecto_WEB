@@ -52,12 +52,7 @@ export class TournamentPageComponent implements OnInit {
     this.loadTournaments();
   }
 
-  // Método para manejar cambios de sección desde la barra de navegación
-  onSectionChange(section: string) {
-    this.activeSection = section;
-  }
-
-  // Métodos para mantener consistencia con otras páginas
+  // Métodos para el panel de usuario
   getCurrentUser(): AuthUser | null {
     return this.authService.getUser();
   }
@@ -67,13 +62,6 @@ export class TournamentPageComponent implements OnInit {
     return user?.role === 'Admin';
   }
 
-  logout() {
-    if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-      this.authService.logout();
-      this.notifications.showSuccess('👋 Sesión cerrada correctamente', 3000);
-      this.router.navigate(['/login']);
-    }
-  }
 
   // Método para cambiar de tab
   setActiveTab(tab: string) {

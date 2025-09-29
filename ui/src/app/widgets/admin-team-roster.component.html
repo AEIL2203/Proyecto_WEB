@@ -1,72 +1,517 @@
-<div class="card p-3">
-  <div class="card-header" style="display:block; text-align:center;">
-    <div class="card-title" style="margin-bottom: 4px;">Gestión de jugadores por equipo</div>
-    <div class="card-subtitle" style="display:block;">Administra la plantilla por equipo</div>
+<div class="modern-players-container">
+  <!-- Header Section -->
+  <div class="modern-header">
+    <div class="header-icon">⚽</div>
+    <h1 class="header-title">Gestión de Jugadores</h1>
+    <p class="header-subtitle">Administrar plantillas y jugadores por equipo</p>
   </div>
 
-  <!-- Selección de equipo -->
-  <div class="input-group" style="margin-bottom: 12px; display:flex; gap:10px; align-items:flex-end;">
-    <div class="field" style="min-width:260px; max-width:420px;">
-      <label>Equipo</label>
-      <select #teamSel class="select" (change)="onSelectTeam(teamSel.value)">
-        <option [value]="0">Seleccione equipo…</option>
-        <option *ngFor="let t of teams; trackBy: trackTeam" [value]="t.teamId">
-          {{ t.name }} (#{{t.teamId}})
-        </option>
-      </select>
-    </div>
-    <a class="btn btn-success" 
-       [routerLink]="['/players/new']"
-       [queryParams]="{ teamId: selectedTeamId || null }"
-       style="white-space: nowrap;">
-      ➕ Agregar nuevo jugador
-    </a>
-  </div>
-  <!-- Lista de jugadores -->
-  <div *ngIf="selectedTeamId !== null; else noTeam">
-    <div class="muted text-sm" style="margin-bottom: 10px;">Equipo #{{ selectedTeamId }}</div>
-
-    <div *ngIf="loading">Cargando jugadores…</div>
-    <div *ngIf="!loading" class="admin-roster">
-      <table class="w-full text-sm" *ngIf="players.length; else empty">
-        <colgroup>
-          <col style="width: 56px;" />
-          <col />
-          <col style="width: 140px;" />
-          <col style="width: 140px;" />
-        </colgroup>
-        <thead>
-          <tr>
-            <th scope="col" class="col-num text-left">#</th>
-            <th scope="col" class="col-name text-left">Nombre</th>
-            <th scope="col" class="col-pos text-left">Posición</th>
-            <th scope="col" class="col-actions text-right"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let p of players; trackBy: trackPlayer">
-            <td class="col-num text-left">{{ p.number ?? '—' }}</td>
-            <td class="col-name text-left">{{ p.name }}</td>
-            <td class="col-pos text-left">{{ p.position || '' }}</td>
-            <td class="col-actions text-right">
-              <button class="btn btn-ghost btn-sm" title="Eliminar" aria-label="Eliminar usuario" (click)="deletePlayer(p)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
-                  <path d="M9 3h6a1 1 0 0 1 1 1v2h4v2h-2v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8H4V6h4V4a1 1 0 0 1 1-1zm1 4v12h2V7h-2zm4 0v12h2V7h-2zM10 5v1h4V5h-4z"/>
-                </svg>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <ng-template #empty><div class="text-sm muted">Equipo sin jugadores.</div></ng-template>
-    </div>
-
-    <!-- Alta de usuario -->
-    <div class="card-subsection" style="margin-top: 14px;">
-      <div *ngIf="errorMsg" class="error">{{ errorMsg }}</div>
+  <!-- Team Selection and Actions -->
+  <div class="team-selection-section">
+    <div class="selection-container">
+      <div class="team-field">
+        <label class="field-label">Equipo</label>
+        <select #teamSel class="modern-select" (change)="onSelectTeam(teamSel.value)">
+          <option [value]="0">Seleccione equipo…</option>
+          <option *ngFor="let t of teams; trackBy: trackTeam" [value]="t.teamId">
+            {{ t.name }}
+          </option>
+        </select>
+        <div class="field-hint">Selecciona un equipo para gestionar su plantilla</div>
+      </div>
+      
+      <a class="add-player-btn" 
+         [routerLink]="['/players/new']"
+         [queryParams]="{ teamId: selectedTeamId || null }">
+        <span class="btn-icon">➕</span>
+        <span class="btn-text">Agregar nuevo jugador</span>
+      </a>
     </div>
   </div>
+  <!-- Players List Section -->
+  <div class="players-content" *ngIf="selectedTeamId !== null; else noTeam">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <div class="loading-spinner">⏳</div>
+      <p>Cargando jugadores...</p>
+    </div>
 
+    <!-- Players Table -->
+    <div *ngIf="!loading" class="players-table-container">
+      <div class="table-header">
+        <h3 class="table-title">Plantilla del Equipo</h3>
+        <span class="players-count">{{ players.length }} jugadores</span>
+      </div>
+
+      <div class="modern-table" *ngIf="players.length; else empty">
+        <div class="table-row table-header-row">
+          <div class="table-cell cell-number">Número</div>
+          <div class="table-cell cell-name">Nombre</div>
+          <div class="table-cell cell-position">Posición</div>
+          <div class="table-cell cell-actions">Acciones</div>
+        </div>
+        
+        <div class="table-row" *ngFor="let p of players; trackBy: trackPlayer">
+          <div class="table-cell cell-number">
+            <span class="player-number">{{ p.number ?? '—' }}</span>
+          </div>
+          <div class="table-cell cell-name">
+            <span class="player-name">{{ p.name }}</span>
+          </div>
+          <div class="table-cell cell-position">
+            <span class="player-position">{{ p.position || 'Sin posición' }}</span>
+          </div>
+          <div class="table-cell cell-actions">
+            <button class="delete-btn" 
+                    title="Eliminar jugador" 
+                    (click)="deletePlayer(p)">
+              <span class="delete-icon">🗑️</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <ng-template #empty>
+        <div class="empty-state">
+          <div class="empty-icon">⚽</div>
+          <h4>No hay jugadores</h4>
+          <p>Este equipo aún no tiene jugadores registrados.</p>
+          <a class="add-first-player-btn" 
+             [routerLink]="['/players/new']"
+             [queryParams]="{ teamId: selectedTeamId }">
+            ➕ Agregar primer jugador
+          </a>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="errorMsg" class="error-alert">
+      {{ errorMsg }}
+    </div>
+  </div>
+
+  <!-- No Team Selected State -->
   <ng-template #noTeam>
-    <div class="text-sm muted">Selecciona un equipo para gestionar su plantilla.</div>
+    <div class="no-team-state">
+      <div class="no-team-icon">👥</div>
+      <h4>Selecciona un equipo</h4>
+      <p>Elige un equipo del menú desplegable para gestionar su plantilla de jugadores.</p>
+    </div>
   </ng-template>
+</div>
+
+<style>
+/* Modern Container */
+.modern-players-container {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Header Styles */
+.modern-header {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+  padding: 2.5rem 2rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  opacity: 0.8;
+}
+
+.header-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.025em;
+}
+
+.header-subtitle {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+}
+
+/* Team Selection Section */
+.team-selection-section {
+  padding: 2rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.selection-container {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.team-field {
+  flex: 1;
+  min-width: 280px;
+  max-width: 400px;
+}
+
+.field-label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.5rem;
+}
+
+.modern-select {
+  width: 100%;
+  padding: 0.875rem 2.5rem 0.875rem 1rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  color: white;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.25rem 1.25rem;
+}
+
+.modern-select:focus {
+  border-color: rgba(139, 92, 246, 0.6);
+  background: rgba(15, 23, 42, 0.8);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+}
+
+.field-hint {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 0.25rem;
+}
+
+.add-player-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  border-radius: 0.75rem;
+  color: white;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+  height: fit-content;
+  margin-top: 1.875rem; /* Align with input field (label height + margin) */
+}
+
+.add-player-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.btn-icon {
+  font-size: 1rem;
+}
+
+/* Players Content */
+.players-content {
+  padding: 2rem;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.loading-spinner {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.loading-state p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+}
+
+/* Table Header */
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.table-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+}
+
+.players-count {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.5rem;
+}
+
+/* Modern Table */
+.modern-table {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 150px 100px;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table-row:not(.table-header-row):hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.table-header-row {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-cell {
+  display: flex;
+  align-items: center;
+}
+
+.cell-actions {
+  justify-content: flex-end;
+}
+
+.player-number {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(59, 130, 246, 0.2);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  min-width: 2rem;
+  text-align: center;
+}
+
+.player-name {
+  font-weight: 500;
+  color: white;
+}
+
+.player-position {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.delete-btn {
+  padding: 0.5rem;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 0.5rem;
+  color: #fca5a5;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
+  transform: scale(1.05);
+}
+
+.delete-icon {
+  font-size: 1rem;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h4 {
+  font-size: 1.25rem;
+  color: white;
+  margin: 0 0 0.5rem 0;
+}
+
+.empty-state p {
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 1.5rem 0;
+}
+
+.add-first-player-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border: none;
+  border-radius: 0.5rem;
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.add-first-player-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* No Team State */
+.no-team-state {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.no-team-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.no-team-state h4 {
+  font-size: 1.25rem;
+  color: white;
+  margin: 0 0 0.5rem 0;
+}
+
+.no-team-state p {
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Error Alert */
+.error-alert {
+  padding: 1rem 1.25rem;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 0.75rem;
+  color: #fca5a5;
+  margin-top: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modern-header {
+    padding: 2rem 1.5rem;
+  }
+  
+  .header-title {
+    font-size: 1.5rem;
+  }
+  
+  .team-selection-section {
+    padding: 1.5rem;
+  }
+  
+  .selection-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+  }
+  
+  .team-field {
+    min-width: auto;
+    max-width: none;
+  }
+  
+  .add-player-btn {
+    justify-content: center;
+    align-self: center;
+    width: 100%;
+    max-width: 300px;
+    margin-top: 0; /* Remove top margin on mobile */
+  }
+  
+  .players-content {
+    padding: 1.5rem;
+  }
+  
+  .table-row {
+    grid-template-columns: 60px 1fr 80px;
+    padding: 0.75rem 1rem;
+  }
+  
+  .cell-position {
+    display: none;
+  }
+  
+  .table-header-row .cell-position {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .modern-header {
+    padding: 1.5rem 1rem;
+  }
+  
+  .header-icon {
+    font-size: 2rem;
+  }
+  
+  .header-title {
+    font-size: 1.25rem;
+  }
+  
+  .team-selection-section {
+    padding: 1rem;
+  }
+  
+  .players-content {
+    padding: 1rem;
+  }
+  
+  .table-row {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .player-number {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.4rem;
+  }
+}
+</style>

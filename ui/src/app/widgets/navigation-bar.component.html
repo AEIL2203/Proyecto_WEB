@@ -12,35 +12,60 @@
         class="nav-item" 
         [routerLink]="['/welcome']"
         title="Ir a Bienvenido">
-        <span class="nav-icon">👋</span>
         <span class="nav-text">Bienvenido</span>
       </a>
       <button 
         class="nav-item" 
         [class.active]="activeSection === 'teams'"
-        (click)="setActiveSection('teams')">
+        (click)="setActiveSection('teams')"
+        title="Ir a Crear Equipos"
+        *ngIf="canCreate()">
         <span class="nav-icon">👥</span>
-        <span class="nav-text">Crear Equipo</span>
+        <span class="nav-text">Crear Equipos</span>
+      </button>
+      
+      <!-- Versión solo lectura para usuarios normales -->
+      <button 
+        class="nav-item" 
+        [class.active]="activeSection === 'teams'"
+        (click)="setActiveSection('teams')"
+        title="Ver Equipos"
+        *ngIf="!canCreate()">
+        <span class="nav-icon">👥</span>
+        <span class="nav-text">Ver Equipos</span>
       </button>
 
       <button 
         class="nav-item" 
         [class.active]="activeSection === 'games'"
-        (click)="setActiveSection('games')">
+        (click)="setActiveSection('games')"
+        *ngIf="canCreate()">
         <span class="nav-icon">🏀</span>
         <span class="nav-text">Crear Partidos</span>
+      </button>
+      
+      <!-- Versión solo lectura para usuarios normales -->
+      <button 
+        class="nav-item" 
+        [class.active]="activeSection === 'games'"
+        (click)="setActiveSection('games')"
+        *ngIf="!canCreate()">
+        <span class="nav-icon">🏀</span>
+        <span class="nav-text">Ver Partidos</span>
       </button>
 
       <button 
         class="nav-item" 
         [class.active]="activeSection === 'players'"
-        (click)="setActiveSection('players')">
+        (click)="setActiveSection('players')"
+        title="Ir a Gestionar Jugadores"
+        *ngIf="canEdit()">
         <span class="nav-icon">⚽</span>
         <span class="nav-text">Gestionar Jugadores</span>
       </button>
 
       <a 
-        class="nav-item" 
+        class="nav-item"
         [routerLink]="['/tournament']"
         title="Ir a Torneos">
         <span class="nav-icon">🏆</span>
@@ -55,7 +80,7 @@
         <span class="user-role"> Rol: {{ user.role }}</span>
       </div>
       
-      <button class="logout-btn" (click)="logout()" title="Cerrar Sesión">
+      <button class="logout-btn" (click)="logout()" title="Cerrar Sesión" *ngIf="user">
         <span class="logout-icon">🚪</span>
         <span class="logout-text">Cerrar Sesión</span>
       </button>

@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { SectionHeaderComponent } from '../widgets/section-header.component';
+import { NavigationBarComponent } from '../widgets/navigation-bar.component';
 import { ApiService, Team } from '../services/api.service';
 import { NotificationService } from '../services/notification.service';
 
 @Component({
   selector: 'app-player-form-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, SectionHeaderComponent],
+  imports: [CommonModule, FormsModule, SectionHeaderComponent, NavigationBarComponent],
   templateUrl: './player-form-page.component.html',
 })
 export class PlayerFormPageComponent {

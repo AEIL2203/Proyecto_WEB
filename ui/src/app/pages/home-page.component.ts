@@ -15,6 +15,7 @@ import { ClockComponent } from '../widgets/clock.component';
 import { TeamRosterComponent } from '../widgets/team-roster.component';
 import { AuthService } from '../services/auth.service';
 import { ClockService } from '../services/clock.service';
+import { PermissionsService } from '../services/permissions.service';
 
 @Component({
   selector: 'app-home-page',
@@ -78,6 +79,7 @@ export class HomePageComponent implements OnInit {
     private route: ActivatedRoute,
     private auth: AuthService,
     private clock: ClockService,
+    private permissions: PermissionsService,
   ) {
     this.reloadAll();
   }
@@ -105,6 +107,12 @@ export class HomePageComponent implements OnInit {
   isAdmin(): boolean { return this.auth.isAdmin(); }
   getCurrentUser() { return this.auth.getUser(); }
   logout() { this.auth.logout(); }
+
+  // Métodos de permisos
+  canCreate(): boolean { return this.permissions.canCreate(); }
+  canEdit(): boolean { return this.permissions.canEdit(); }
+  canDelete(): boolean { return this.permissions.canDelete(); }
+  canControlGames(): boolean { return this.permissions.canControlGames(); }
 
   // Validaciones
   isTeamNameValid(value: string): boolean {
