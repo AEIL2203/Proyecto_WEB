@@ -46,10 +46,10 @@ export class HomePageComponent implements OnInit {
   // Nombre del equipo a crear
   newTeamName = '';
   newTeamCity: string | null = null;
-
+  
   private teamNameRegex = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/;
 
-  // Logo del equipo (drag & drop o file input)
+  // Logo del equipo (drag & drop o file input) para creación
   newTeamLogoFile: File | null = null;
   newTeamLogoPreviewUrl: string | null = null;
   
@@ -141,6 +141,7 @@ export class HomePageComponent implements OnInit {
     this.api.getGame(id).subscribe((d: GameDetail) => (this.detail = d));
   }
 
+  // Crear enfrentamiento a partir de IDs de equipo
   createGame(homeTeamId: number, awayTeamId: number) {
     if (!homeTeamId || !awayTeamId) return;
     if (homeTeamId === awayTeamId) {
@@ -178,6 +179,22 @@ export class HomePageComponent implements OnInit {
     this.editLogoFile = null;
     if (this.editLogoPreviewUrl) { URL.revokeObjectURL(this.editLogoPreviewUrl); }
     this.editLogoPreviewUrl = null;
+  }
+
+  // Baja lógica de equipo
+  deleteTeam(t: Team) {
+    if (!t?.teamId) return;
+    const name = t.name;
+    const ok = confirm(`¿Desactivar el equipo "${name}"?\nNo aparecerá más en las listas.`);
+    if (!ok) return;
+    this.api.deleteTeam(t.teamId).subscribe({
+      next: () => {
+        this.notifications.showSuccess('Equipo desactivado');
+        if (this.editingTeamId === t.teamId) this.cancelEditTeam();
+        this.api.listTeams().subscribe((teams: Team[]) => (this.teams = teams));
+      },
+      error: () => this.notifications.showError('Error desactivando equipo')
+    });
   }
 
   cancelEditTeam() {

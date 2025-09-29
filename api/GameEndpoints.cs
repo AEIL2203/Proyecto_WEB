@@ -323,7 +323,7 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
         g.MapGet("/teams", async () =>
         {
             using var c = new SqlConnection(cs());
-            var rows = await c.QueryAsync($"SELECT TeamId, Name, City, CreatedAt FROM {T}Club ORDER BY Name;");
+            var rows = await c.QueryAsync($"SELECT TeamId, Name, City, CreatedAt FROM {T}Club WHERE Active=1 ORDER BY Name;");
             return Results.Ok(rows);
         }).WithOpenApi();
 
@@ -354,10 +354,18 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             {
                 using var c = new SqlConnection(cs());
                 var city = string.IsNullOrWhiteSpace(body?.City) ? null : body!.City!.Trim();
-                var id = await c.ExecuteScalarAsync<int>($"INSERT INTO {T}Club(Name, City) OUTPUT INSERTED.TeamId VALUES(@name, @city);", new { name, city });
+                var id = await c.ExecuteScalarAsync<int>($"INSERT INTO {T}Club(Name, City, Active) OUTPUT INSERTED.TeamId VALUES(@name, @city, 1);", new { name, city });
                 return Results.Created($"/api/teams/{id}", new { teamId = id, name });
             }
             catch (SqlException ex) when (ex.Number is 2601 or 2627) { return Results.Conflict(new { error = "Nombre duplicado." }); }
+        }).WithOpenApi();
+
+        // DELETE /api/teams/{teamId} -> baja lógica (Active=0)
+        g.MapDelete("/teams/{teamId:int}", async (int teamId) =>
+        {
+            using var c = new SqlConnection(cs());
+            var rows = await c.ExecuteAsync($"UPDATE {T}Club SET Active=0 WHERE TeamId=@teamId;", new { teamId });
+            return rows > 0 ? Results.NoContent() : Results.NotFound();
         }).WithOpenApi();
 
         // PATCH /api/teams/{teamId} -> actualizar nombre y/o ciudad

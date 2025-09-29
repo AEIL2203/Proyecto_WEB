@@ -38,7 +38,7 @@
       <!-- Crear partido -->
       <div class="card p-3">
         <div class="card-header center">
-          <div class="card-title">Crear enfrentamiento</div>
+          <div class="card-title">Crear un partido</div>
           <div class="card-subtitle">Crear un nuevo partido entre equipos</div>
         </div>
         
@@ -79,7 +79,7 @@
             class="btn btn-success"
             [disabled]="creating"
             (click)="createGame(+homeSel.value, +awaySel.value)"
-            class="btn-wide">
+            class="btn-success btn-wide">
             {{ creating ? 'Creando…' : 'Crear partido' }}
           </button>
         </div>
@@ -282,9 +282,10 @@
                     <div class="text-xs" *ngIf="t.city" style="opacity:.8;">{{ t.city }}</div>
                   </div>
                 </div>
-                <div class="row-end">
+                <div class="row-end ml-auto">
                   <span class="text-xs pill pill-accent">#{{t.teamId}}</span>
-                  <button class="btn btn-sm btn-edit ml-auto" (click)="startEditTeam(t)">Editar</button>
+                  <button class="btn btn-sm btn-edit" (click)="startEditTeam(t)">Editar</button>
+                  <button class="btn btn-sm btn-danger" (click)="deleteTeam(t)">Eliminar</button>
                 </div>
               </div>
   
