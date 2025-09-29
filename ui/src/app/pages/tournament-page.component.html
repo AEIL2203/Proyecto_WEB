@@ -63,56 +63,79 @@
             <div class="card-subtitle">Configura un nuevo torneo de baloncesto</div>
           </div>
           
-          <div class="mb-10">
-            <div class="form-group">
-              <label class="form-label">Nombre del Torneo</label>
-              <input type="text" class="form-control" placeholder="Ej: Copa de Baloncesto 2024">
+          <form (ngSubmit)="createTournament()" #tournamentForm="ngForm">
+            <div class="mb-10">
+              <div class="form-group">
+                <label class="form-label">Nombre del Torneo *</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  placeholder="Ej: Copa de Baloncesto 2024"
+                  [(ngModel)]="newTournament.nombreTorneo"
+                  name="nombreTorneo"
+                  required
+                  #nombreTorneo="ngModel">
+                <div *ngIf="nombreTorneo.invalid && nombreTorneo.touched" class="error-message">
+                  El nombre del torneo es obligatorio
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Descripción</label>
+                <textarea 
+                  class="form-control" 
+                  rows="3" 
+                  placeholder="Descripción del torneo..."
+                  [(ngModel)]="newTournament.descripcion"
+                  name="descripcion"></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Número de Equipos *</label>
+                <select 
+                  class="form-control"
+                  [(ngModel)]="newTournament.numeroEquipos"
+                  name="numeroEquipos"
+                  required>
+                  <option [value]="4">4 equipos</option>
+                  <option [value]="8" selected>8 equipos</option>
+                  <option [value]="16">16 equipos</option>
+                  <option [value]="32">32 equipos</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Estado</label>
+                <select 
+                  class="form-control"
+                  [(ngModel)]="newTournament.estado"
+                  name="estado">
+                  <option value="PROGRAMADO">Programado</option>
+                  <option value="EN_PROGRESO">En Progreso</option>
+                  <option value="FINALIZADO">Finalizado</option>
+                  <option value="CANCELADO">Cancelado</option>
+                </select>
+              </div>
+              
+              <div class="form-actions">
+                <button 
+                  type="submit" 
+                  class="btn btn-primary"
+                  [disabled]="loading || tournamentForm.invalid">
+                  <span *ngIf="loading">⏳ Creando...</span>
+                  <span *ngIf="!loading">🏆 Crear Torneo</span>
+                </button>
+                
+                <button 
+                  type="button" 
+                  class="btn btn-secondary"
+                  (click)="resetForm()"
+                  [disabled]="loading">
+                  🔄 Limpiar
+                </button>
+              </div>
             </div>
-            
-            <div class="form-group">
-              <label class="form-label">Descripción</label>
-              <textarea class="form-control" rows="3" placeholder="Descripción del torneo..."></textarea>
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label">Tipo de Torneo</label>
-              <select class="form-control">
-                <option value="">Seleccionar tipo...</option>
-                <option value="single">Eliminación Simple</option>
-                <option value="double">Eliminación Doble</option>
-                <option value="league">Liga (Todos vs Todos)</option>
-              </select>
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label">Número de Equipos</label>
-              <select class="form-control">
-                <option value="">Seleccionar cantidad...</option>
-                <option value="4">4 equipos</option>
-                <option value="8">8 equipos</option>
-                <option value="16">16 equipos</option>
-                <option value="32">32 equipos</option>
-              </select>
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label">Fecha de Inicio</label>
-              <input type="date" class="form-control">
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label">Duración de Cuartos</label>
-              <select class="form-control">
-                <option value="300000">5 minutos</option>
-                <option value="600000">10 minutos</option>
-                <option value="720000" selected>12 minutos</option>
-              </select>
-            </div>
-            
-            <button class="btn btn-primary" disabled>
-              🏆 Crear Torneo (Próximamente)
-            </button>
-          </div>
+          </form>
         </div>
 
         <!-- Información y Ayuda -->
@@ -155,12 +178,50 @@
         <div class="card p-3">
           <div class="card-header center">
             <div class="card-title">👁️ Torneos Existentes</div>
-            <div class="card-subtitle">Lista de todos los torneos</div>
+            <div class="card-subtitle">Lista de todos los torneos ({{ tournaments.length }})</div>
           </div>
           
           <div class="mb-10">
-            <!-- Placeholder para lista de torneos -->
-            <div class="empty-state">
+            <!-- Loading state -->
+            <div *ngIf="loading" class="loading-state">
+              <div class="loading-spinner">⏳</div>
+              <p>Cargando torneos...</p>
+            </div>
+
+            <!-- Lista de torneos -->
+            <div *ngIf="!loading && tournaments.length > 0" class="tournaments-list">
+              <div *ngFor="let tournament of tournaments; trackBy: trackByTournamentId" class="tournament-item">
+                <div class="tournament-header">
+                  <h4 class="tournament-name">🏆 {{ tournament.nombreTorneo }}</h4>
+                  <div class="tournament-actions">
+                    <span class="tournament-status" [class]="'status-' + tournament.estado.toLowerCase()">
+                      {{ getStatusText(tournament.estado) }}
+                    </span>
+                    <button 
+                      class="btn btn-danger btn-sm"
+                      (click)="deleteTournament(tournament)"
+                      [disabled]="loading"
+                      title="Eliminar torneo">
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="tournament-details">
+                  <div class="tournament-info">
+                    <span class="info-item">
+                      <strong>Equipos:</strong> {{ tournament.numeroEquipos }}
+                    </span>
+                    <span class="info-item" *ngIf="tournament.descripcion">
+                      <strong>Descripción:</strong> {{ tournament.descripcion }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estado vacío -->
+            <div *ngIf="!loading && tournaments.length === 0" class="empty-state">
               <div class="empty-icon">🏆</div>
               <h4>No hay torneos creados</h4>
               <p class="text-muted">
@@ -169,12 +230,6 @@
               <button class="btn btn-primary" (click)="setActiveTab('create')">
                 ➕ Crear Primer Torneo
               </button>
-            </div>
-            
-            <!-- Aquí se mostraría la lista de torneos cuando esté implementada -->
-            <div class="alert alert-warning">
-              <strong>🚧 En desarrollo...</strong><br>
-              La funcionalidad de visualización de torneos se implementará próximamente.
             </div>
           </div>
         </div>
@@ -286,6 +341,116 @@
   margin-right: auto;
 }
 
+/* Estilos para formularios */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.error-message {
+  color: var(--danger);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* Estilos para lista de torneos */
+.loading-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.loading-spinner {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.tournaments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tournament-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.tournament-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.tournament-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.tournament-name {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.2rem;
+}
+
+.tournament-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tournament-status {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-programado {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+.status-en_progreso {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+.status-finalizado {
+  background: rgba(156, 163, 175, 0.2);
+  color: #9ca3af;
+}
+
+.status-cancelado {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+.tournament-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.info-item {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.info-item strong {
+  color: var(--text);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
 @media (max-width: 768px) {
   .tab-button {
     padding: 10px 16px;
@@ -301,6 +466,25 @@
   
   .empty-icon {
     font-size: 3rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .tournament-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .tournament-actions {
+    align-self: flex-end;
+  }
+
+  .tournament-info {
+    flex-direction: column;
+    gap: 8px;
   }
 }
 </style>

@@ -40,6 +40,21 @@ IF COL_LENGTH('core.Club','LogoFileName') IS NULL
 GO
 
 /* =========================
+   TOURNAMENTS
+   ========================= */
+IF OBJECT_ID('core.Tournaments') IS NULL
+BEGIN
+    CREATE TABLE core.Tournaments(
+        ID_torneo       INT IDENTITY(1,1) PRIMARY KEY,
+        Nombre_torneo   NVARCHAR(200) NOT NULL,
+        Descripcion     NVARCHAR(1000) NULL,
+        Numero_equipos  INT NOT NULL DEFAULT 8,
+        Estado          NVARCHAR(50) NOT NULL DEFAULT 'PROGRAMADO'
+    );
+END
+GO
+
+/* =========================
    GAMES
    ========================= */
 IF OBJECT_ID('core.Matches') IS NULL

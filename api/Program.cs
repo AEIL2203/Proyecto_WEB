@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Data.SqlClient;
 using Microsoft.IdentityModel.Tokens;
+using Api;
 using Api.Auth.Services;
 
 var b = WebApplication.CreateBuilder(args);
@@ -132,6 +133,7 @@ app.MapPost("/api/auth/register", async (CreateUserPublicDto reg, IPasswordHashe
 app.MapGameEndpoints(getCs);
 app.MapClockEndpoints(getCs);
 app.MapAdminEndpoints(getCs);
+app.MapTournamentEndpoints(getCs);
 
 app.Run();
 

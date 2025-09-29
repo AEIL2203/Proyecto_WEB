@@ -48,23 +48,60 @@ export interface Player {
   position?: string | null;
   active: boolean;
   createdAt: string;
+  height?: number | null;
+  age?: number | null;
+  nationality?: string | null;
 }
 
-/* ===== Resumen de faltas ===== */
+export interface Substitution {
+  substitutionId: number;
+  gameId: number;
+  team: 'HOME' | 'AWAY';
+  playerOut: number;
+  playerIn: number;
+  quarter: number;
+  createdAt: string;
+}
+
 export interface FoulSummaryTeamRow {
   quarter: number;
   team: 'HOME' | 'AWAY' | string;
   fouls: number;
 }
+
 export interface FoulSummaryPlayerRow {
   quarter: number;
   team: 'HOME' | 'AWAY' | string;
   playerId: number;
   fouls: number;
 }
+
 export interface FoulSummary {
   team: FoulSummaryTeamRow[];
   players: FoulSummaryPlayerRow[];
+}
+
+/* ===== Torneos ===== */
+export interface Tournament {
+  idTorneo: number;
+  nombreTorneo: string;
+  descripcion?: string | null;
+  numeroEquipos: number;
+  estado: string;
+}
+
+export interface CreateTournament {
+  nombreTorneo: string;
+  descripcion?: string | null;
+  numeroEquipos: number;
+  estado?: string;
+}
+
+export interface UpdateTournament {
+  nombreTorneo: string;
+  descripcion?: string | null;
+  numeroEquipos: number;
+  estado: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -85,6 +122,20 @@ export class ApiService {
       return out as T;
     }
     return obj as T;
+  }
+
+  // ===== util: camelCase -> snake_case =====
+  private toSnake(obj: any): any {
+    if (Array.isArray(obj)) return obj.map(v => this.toSnake(v));
+    if (obj && typeof obj === 'object') {
+      const out: any = {};
+      for (const [k, v] of Object.entries(obj)) {
+        const sk = k.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+        out[sk] = this.toSnake(v);
+      }
+      return out;
+    }
+    return obj;
   }
 
   private ensureUtcIso(s?: string): string {
@@ -304,5 +355,36 @@ export class ApiService {
 
   deleteUser(userId: number) {
     return this.http.delete(`${this.base}/admin/users/${userId}`);
+  }
+
+  /* ===== Torneos ===== */
+  getTournaments(): Observable<Tournament[]> {
+    return this.http.get<Tournament[]>(`${this.base}/tournaments`).pipe(
+      map(tournaments => tournaments.map(t => this.toCamel<Tournament>(t)))
+    );
+  }
+
+  getTournament(id: number): Observable<Tournament> {
+    return this.http.get<Tournament>(`${this.base}/tournaments/${id}`).pipe(
+      map(tournament => this.toCamel<Tournament>(tournament))
+    );
+  }
+
+  createTournament(tournament: CreateTournament): Observable<Tournament> {
+    const payload = this.toSnake(tournament);
+    return this.http.post<Tournament>(`${this.base}/tournaments`, payload).pipe(
+      map(tournament => this.toCamel<Tournament>(tournament))
+    );
+  }
+
+  updateTournament(id: number, tournament: UpdateTournament): Observable<Tournament> {
+    const payload = this.toSnake(tournament);
+    return this.http.put<Tournament>(`${this.base}/tournaments/${id}`, payload).pipe(
+      map(tournament => this.toCamel<Tournament>(tournament))
+    );
+  }
+
+  deleteTournament(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.base}/tournaments/${id}`);
   }
 }
