@@ -10,10 +10,12 @@ import { RegisterUserPageComponent } from './pages/register-user-page.component'
 import { UserListPageComponent } from './pages/user-list-page.component';
 import { WelcomePageComponent } from './pages/welcome-page.component';
 import { ControlPageComponent } from './pages/control-page.component';
+import { TournamentPageComponent } from './pages/tournament-page.component';
 
 export const routes: Routes = [
   { path: '', component: HomePageComponent, canActivate: [authGuard] }, // tablero de control (protegido)
   { path: 'welcome', component: WelcomePageComponent, canActivate: [authGuard] }, // pantalla de bienvenida (protegido)
+  { path: 'tournament', component: TournamentPageComponent, canActivate: [authGuard] }, // página de torneos (protegido)
   { path: 'controls/:id', component: ControlPageComponent, canActivate: [authGuard] }, // página dedicada de controles (protegido)
   { path: 'login', component: LoginPageComponent },
   { path: 'register', component: RegisterUserPageComponent }, // registro público

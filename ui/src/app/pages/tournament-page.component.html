@@ -1,0 +1,306 @@
+<!-- Barra de navegación -->
+<app-navigation-bar (sectionChange)="onSectionChange($event)"></app-navigation-bar>
+
+<!-- Panel de información del usuario (solo si está autenticado) -->
+<div class="user-info-panel" *ngIf="getCurrentUser()">
+  <div class="container">
+    <div class="user-welcome">
+      <span class="user-greeting">👋 Bienvenido, <strong>{{ getCurrentUser()?.userName }}</strong></span>
+      <span class="user-role" [class.admin-role]="isAdmin()">
+        {{ isAdmin() ? '👑 Administrador' : '👤 Usuario' }}
+      </span>
+      <div class="admin-actions" *ngIf="isAdmin()">
+        <a routerLink="/admin/users" class="admin-link">
+          👥 Ver Usuarios
+        </a>
+        <a routerLink="/admin/register-user" class="admin-link">
+          ➕ Registrar Usuario
+        </a>
+        <button (click)="logout()" class="logout-btn">
+          🚪 Cerrar Sesión
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="p-4">
+  <!-- Sección: Gestión de Torneos -->
+  <section class="container">
+    <app-section-header 
+      icon="🏆" 
+      title="Gestión de Torneos" 
+      description="Organiza y administra torneos completos de baloncesto">
+    </app-section-header>
+    
+    <!-- Sistema de Tabs -->
+    <div class="tabs-container mb-4">
+      <div class="tabs-header">
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'create'"
+          (click)="setActiveTab('create')">
+          <span class="tab-icon">➕</span>
+          <span class="tab-text">Crear Torneo</span>
+        </button>
+        <button 
+          class="tab-button" 
+          [class.active]="activeTab === 'view'"
+          (click)="setActiveTab('view')">
+          <span class="tab-icon">👁️</span>
+          <span class="tab-text">Ver Torneos</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Contenido del Tab: Crear Torneo -->
+    <div *ngIf="activeTab === 'create'" class="tab-content">
+      <div class="grid-2-14-20">
+        <!-- Formulario de Creación -->
+        <div class="card p-3">
+          <div class="card-header center">
+            <div class="card-title">➕ Crear Nuevo Torneo</div>
+            <div class="card-subtitle">Configura un nuevo torneo de baloncesto</div>
+          </div>
+          
+          <div class="mb-10">
+            <div class="form-group">
+              <label class="form-label">Nombre del Torneo</label>
+              <input type="text" class="form-control" placeholder="Ej: Copa de Baloncesto 2024">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Descripción</label>
+              <textarea class="form-control" rows="3" placeholder="Descripción del torneo..."></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Tipo de Torneo</label>
+              <select class="form-control">
+                <option value="">Seleccionar tipo...</option>
+                <option value="single">Eliminación Simple</option>
+                <option value="double">Eliminación Doble</option>
+                <option value="league">Liga (Todos vs Todos)</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Número de Equipos</label>
+              <select class="form-control">
+                <option value="">Seleccionar cantidad...</option>
+                <option value="4">4 equipos</option>
+                <option value="8">8 equipos</option>
+                <option value="16">16 equipos</option>
+                <option value="32">32 equipos</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Fecha de Inicio</label>
+              <input type="date" class="form-control">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Duración de Cuartos</label>
+              <select class="form-control">
+                <option value="300000">5 minutos</option>
+                <option value="600000">10 minutos</option>
+                <option value="720000" selected>12 minutos</option>
+              </select>
+            </div>
+            
+            <button class="btn btn-primary" disabled>
+              🏆 Crear Torneo (Próximamente)
+            </button>
+          </div>
+        </div>
+
+        <!-- Información y Ayuda -->
+        <div class="card p-3">
+          <div class="card-header center">
+            <div class="card-title">ℹ️ Información</div>
+            <div class="card-subtitle">Guía para crear torneos</div>
+          </div>
+          
+          <div class="mb-10">
+            <div class="info-section">
+              <h5 class="text-primary mb-3">Tipos de Torneo:</h5>
+              <div class="info-item">
+                <strong>🏆 Eliminación Simple:</strong>
+                <p class="text-muted">Los equipos son eliminados tras perder un partido.</p>
+              </div>
+              <div class="info-item">
+                <strong>🔄 Eliminación Doble:</strong>
+                <p class="text-muted">Los equipos deben perder dos veces para ser eliminados.</p>
+              </div>
+              <div class="info-item">
+                <strong>📊 Liga:</strong>
+                <p class="text-muted">Todos los equipos juegan entre sí.</p>
+              </div>
+            </div>
+            
+            <div class="alert alert-info mt-4">
+              <strong>💡 Consejo:</strong><br>
+              Para torneos grandes, se recomienda eliminación simple para reducir el número de partidos.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contenido del Tab: Ver Torneos -->
+    <div *ngIf="activeTab === 'view'" class="tab-content">
+      <div class="grid-1">
+        <!-- Lista de Torneos -->
+        <div class="card p-3">
+          <div class="card-header center">
+            <div class="card-title">👁️ Torneos Existentes</div>
+            <div class="card-subtitle">Lista de todos los torneos</div>
+          </div>
+          
+          <div class="mb-10">
+            <!-- Placeholder para lista de torneos -->
+            <div class="empty-state">
+              <div class="empty-icon">🏆</div>
+              <h4>No hay torneos creados</h4>
+              <p class="text-muted">
+                Aún no se han creado torneos. Usa la pestaña "Crear Torneo" para comenzar.
+              </p>
+              <button class="btn btn-primary" (click)="setActiveTab('create')">
+                ➕ Crear Primer Torneo
+              </button>
+            </div>
+            
+            <!-- Aquí se mostraría la lista de torneos cuando esté implementada -->
+            <div class="alert alert-warning">
+              <strong>🚧 En desarrollo...</strong><br>
+              La funcionalidad de visualización de torneos se implementará próximamente.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Estilos para los tabs -->
+<style>
+.tabs-container {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 4px;
+  box-shadow: var(--shadow-sm);
+}
+
+.tabs-header {
+  display: flex;
+  gap: 4px;
+}
+
+.tab-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius) - 4px);
+  color: var(--muted);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.tab-button.active {
+  background: var(--primary);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.tab-icon {
+  font-size: 16px;
+}
+
+.tab-text {
+  font-size: 14px;
+}
+
+.tab-content {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.info-section {
+  margin-bottom: 20px;
+}
+
+.info-item {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 6px;
+}
+
+.info-item strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.info-item p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.empty-state h4 {
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.empty-state p {
+  margin-bottom: 24px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 768px) {
+  .tab-button {
+    padding: 10px 16px;
+  }
+  
+  .tab-text {
+    font-size: 13px;
+  }
+  
+  .empty-state {
+    padding: 40px 20px;
+  }
+  
+  .empty-icon {
+    font-size: 3rem;
+  }
+}
+</style>

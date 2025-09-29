@@ -38,7 +38,8 @@ export class NavigationBarComponent {
     const sectionNames = {
       'teams': 'Crear Equipo',
       'games': 'Crear Partidos', 
-      'players': 'Gestionar Jugadores'
+      'players': 'Gestionar Jugadores',
+      'tournament': 'Torneos'
     };
     
     const sectionName = sectionNames[section as keyof typeof sectionNames];
