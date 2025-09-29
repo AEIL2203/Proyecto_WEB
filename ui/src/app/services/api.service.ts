@@ -232,6 +232,11 @@ export class ApiService {
     return this.http.post(`${this.base}/teams/${teamId}/logo`, fd);
   }
 
+  // Baja lógica de equipo
+  deleteTeam(teamId: number) {
+    return this.http.delete(`${this.base}/teams/${teamId}`);
+  }
+
 
   /* ========== Emparejar (crear juego desde IDs de equipo) ========== */
   pairGame(homeTeamId: number, awayTeamId: number, quarterMs?: number): Observable<{ gameId: number }> {

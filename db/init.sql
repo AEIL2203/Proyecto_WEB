@@ -16,6 +16,7 @@ BEGIN
     CREATE TABLE core.Club(
         TeamId    INT IDENTITY(1,1) PRIMARY KEY,
         Name      NVARCHAR(100) NOT NULL UNIQUE,
+        Active    BIT NOT NULL DEFAULT 1,
         CreatedAt DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
     );
 END
@@ -37,6 +38,11 @@ IF COL_LENGTH('core.Club','LogoContentType') IS NULL
 GO
 IF COL_LENGTH('core.Club','LogoFileName') IS NULL
     ALTER TABLE core.Club ADD LogoFileName NVARCHAR(255) NULL;
+GO
+
+/* Soft delete: Active flag */
+IF COL_LENGTH('core.Club','Active') IS NULL
+    ALTER TABLE core.Club ADD Active BIT NOT NULL CONSTRAINT DF_Club_Active DEFAULT(1);
 GO
 
 /* =========================

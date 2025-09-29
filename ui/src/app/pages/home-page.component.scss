@@ -26,6 +26,12 @@
 
 /* Buttons */
 .btn-wide { min-width: 200px; }
+.btn-danger {
+  background: #ef4444;
+  border: 1px solid #dc2626;
+  color: #fff;
+  &:hover { background: #f87171; border-color: #b91c1c; }
+}
 
 /* Images */
 .team-logo-sm { width: 28px; height: 28px; object-fit: cover; border-radius: 6px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); }
