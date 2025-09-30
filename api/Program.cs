@@ -1,4 +1,12 @@
-// Usings y configuración de autenticación/autorización
+/// <summary>
+/// Punto de entrada de la API del marcador.
+/// </summary>
+/// <remarks>
+/// - Registra servicios base (Swagger, CORS) y, si está configurado, la autenticación por JWT.
+/// - Expone un endpoint de salud para monitoreo.
+/// - Resuelve la cadena de conexión y mapea los endpoints del dominio (auth, juegos, reloj, torneos).
+/// - Permite registrar el primer administrador y (temporalmente) crear usuarios públicos para pruebas.
+/// </remarks>
 using System.Text;
 using Dapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,20 +17,16 @@ using Api;
 using Api.Auth.Services;
 
 var b = WebApplication.CreateBuilder(args);
-// Swagger y CORS con una política nombrada para diferenciar el estilo
 b.Services.AddEndpointsApiExplorer();
 b.Services.AddSwaggerGen();
 b.Services.AddCors(o => o.AddPolicy("Open", p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
-// Servicios de Auth
 b.Services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 b.Services.AddSingleton<IJwtService, JwtService>();
 
-// Configuración JWT
 var jwtKey = b.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey))
 {
-    // Clave de desarrollo por defecto si no está configurada
     b.Configuration["Jwt:Key"] = "dev-secret-change-me";
 }
 
@@ -47,7 +51,6 @@ b.Services.AddAuthorization(opts =>
     opts.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
 });
 
-var app = b.Build();
 app.UseCors("Open");
 
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
@@ -57,10 +60,14 @@ app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 
-// Proveedor de cadena de conexión como delegado reutilizable
 var getCs = ConnectionStringHelper.Build(app);
 
-// Endpoints de autenticación
+/// <summary>
+/// Inicia sesión y emite un JWT.
+/// </summary>
+/// <remarks>
+/// Valida credenciales contra `HoopsDB.core.Users`. Requiere usuario activo. Devuelve token y datos básicos del usuario.
+/// </remarks>
 app.MapPost("/api/auth/login", async (LoginDto login, IPasswordHasher hasher, IJwtService jwt) =>
 {
     if (string.IsNullOrWhiteSpace(login.UserName) || string.IsNullOrWhiteSpace(login.Password))
@@ -83,6 +90,12 @@ app.MapPost("/api/auth/login", async (LoginDto login, IPasswordHasher hasher, IJ
     return Results.Ok(new { token, user = new { userName, role } });
 }).WithOpenApi();
 
+/// <summary>
+/// Devuelve la identidad autenticada.
+/// </summary>
+/// <remarks>
+/// Requiere autenticación. Extrae `Name` y `Role` del token JWT vigente.
+/// </remarks>
 app.MapGet("/api/auth/me", [Authorize] (HttpContext ctx) =>
 {
     var name = ctx.User.Identity?.Name ?? "";
@@ -90,7 +103,12 @@ app.MapGet("/api/auth/me", [Authorize] (HttpContext ctx) =>
     return Results.Ok(new { userName = name, role });
 }).WithOpenApi();
 
-// Registrar primer admin si no existen usuarios
+/// <summary>
+/// Registra el primer usuario administrador.
+/// </summary>
+/// <remarks>
+/// Solo permite la creación si no existen filas en `HoopsDB.core.Users`. Genera hash de contraseña con BCrypt.
+/// </remarks>
 app.MapPost("/api/auth/register-first", async (LoginDto reg, IPasswordHasher hasher) =>
 {
     if (string.IsNullOrWhiteSpace(reg.UserName) || string.IsNullOrWhiteSpace(reg.Password))
@@ -105,7 +123,12 @@ app.MapPost("/api/auth/register-first", async (LoginDto reg, IPasswordHasher has
     return Results.Created($"/api/users/{id}", new { userId = id, userName = reg.UserName, role = "Admin" });
 }).WithOpenApi();
 
-// Endpoint público temporal para registro de usuarios
+/// <summary>
+/// Registro público de usuarios (temporal para pruebas).
+/// </summary>
+/// <remarks>
+/// Crea un usuario con rol por defecto `User` (o el proporcionado). Maneja conflictos por duplicados en UserName/Email.
+/// </remarks>
 app.MapPost("/api/auth/register", async (CreateUserPublicDto reg, IPasswordHasher hasher) =>
 {
     if (string.IsNullOrWhiteSpace(reg.UserName) || string.IsNullOrWhiteSpace(reg.Password))
@@ -113,7 +136,6 @@ app.MapPost("/api/auth/register", async (CreateUserPublicDto reg, IPasswordHashe
     
     var hash = hasher.Hash(reg.Password);
     var email = string.IsNullOrWhiteSpace(reg.Email) ? null : reg.Email.Trim();
-    // TEMPORAL: Permitir crear admins desde registro público para testing
     var role = string.IsNullOrWhiteSpace(reg.Role) ? "User" : reg.Role.Trim();
     
     using var c = new SqlConnection(getCs());
@@ -130,6 +152,7 @@ app.MapPost("/api/auth/register", async (CreateUserPublicDto reg, IPasswordHashe
     }
 }).WithOpenApi();
 
+// Mapeo de endpoints del dominio
 app.MapGameEndpoints(getCs);
 app.MapClockEndpoints(getCs);
 app.MapAdminEndpoints(getCs);
@@ -137,7 +160,6 @@ app.MapTournamentEndpoints(getCs);
 
 app.Run();
 
-// DTOs (manténlo aquí o muévelo a Dtos.cs)
 record CreateGameDto(string? Home, string? Away, int? QuarterMs);
 record TeamCreateDto(string Name, string? City, string? LogoUrl);
 record UpdateTeamDto(string? Name, string? City, string? LogoUrl);
@@ -150,7 +172,13 @@ record ClockResetDto(int? QuarterMs);
 record LoginDto(string UserName, string Password);
 record CreateUserPublicDto(string UserName, string Password, string? Email, string? Role);
 
-// Helper para resolver la cadena de conexión con el mismo orden de prioridad
+/// <summary>
+/// Proveedor de cadena de conexión para SQL Server.
+/// </summary>
+/// <remarks>
+/// Prioriza la variable de entorno <c>DB_CONNECTION_STRING</c> y luego <c>ConnectionStrings:DefaultConnection</c>.
+/// Lanza una excepción si ninguna está definida.
+/// </remarks>
 file static class ConnectionStringHelper
 {
     public static Func<string> Build(WebApplication app)
