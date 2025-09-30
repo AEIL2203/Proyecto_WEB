@@ -51,6 +51,8 @@ b.Services.AddAuthorization(opts =>
     opts.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
 });
 
+var app = b.Build();
+
 app.UseCors("Open");
 
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }

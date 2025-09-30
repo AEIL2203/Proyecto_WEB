@@ -1,3 +1,8 @@
+using System;
+using Dapper;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
+
 /// <summary>
 /// Endpoints para el control del reloj del partido.
 /// </summary>
