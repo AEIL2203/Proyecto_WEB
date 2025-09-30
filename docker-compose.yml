@@ -62,8 +62,8 @@ services:
     container_name: marcador_ui
     depends_on:
       api:
-        condition: service_started   # espera a que el contenedor api esté arrancado
-    restart: unless-stopped          # si falla por DNS al principio, se reinicia solo
+        condition: service_started   
+    restart: unless-stopped          
     expose:
       - "80"
     profiles: ["ui", "all"]
