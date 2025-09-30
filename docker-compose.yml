@@ -82,7 +82,7 @@ services:
       - "80:80"
       - "443:443"  # se activará tras instalar certificados y cambiar a config HTTPS
     volumes:
-      - ./Proxy/nginx.http.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./Proxy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - certbot-www:/var/www/certbot
       - certbot-etc:/etc/letsencrypt
     networks:
