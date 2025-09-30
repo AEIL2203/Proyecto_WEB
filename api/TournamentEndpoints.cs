@@ -4,28 +4,73 @@ using System.Data;
 
 namespace Api;
 
+/// <summary>
+/// Endpoints para la administración de torneos.
+/// </summary>
+/// <remarks>
+/// Provee operaciones CRUD con Dapper sobre la tabla <c>core.Tournaments</c>.
+/// Incluye validaciones mínimas de entrada y manejo de errores consistente (<c>Results.Problem</c>).
+/// </remarks>
 public static class TournamentEndpoints
 {
+    /// <summary>
+    /// Registra las rutas de torneos bajo <c>/api/tournaments</c>.
+    /// </summary>
+    /// <remarks>
+    /// - GET <c>/</c>: lista todos los torneos.
+    /// - GET <c>/{id}</c>: obtiene un torneo por ID.
+    /// - POST <c>/</c>: crea un torneo.
+    /// - PUT <c>/{id}</c>: actualiza un torneo.
+    /// - DELETE <c>/{id}</c>: elimina un torneo.
+    /// </remarks>
     public static void MapTournamentEndpoints(this WebApplication app, Func<string> getConnectionString)
     {
         var group = app.MapGroup("/api/tournaments").WithTags("Tournaments");
 
-        // GET /api/tournaments - Obtener todos los torneos
+        /// <summary>
+        /// Lista todos los torneos.
+        /// </summary>
+        /// <remarks>
+        /// Devuelve colección de torneos ordenada por ID descendente.
+        /// </remarks>
         group.MapGet("/", () => GetAllTournaments(getConnectionString()));
-        
-        // GET /api/tournaments/{id} - Obtener un torneo por ID
+
+        /// <summary>
+        /// Obtiene un torneo por ID.
+        /// </summary>
+        /// <remarks>
+        /// Devuelve 404 si no se encuentra el torneo.
+        /// </remarks>
         group.MapGet("/{id:int}", (int id) => GetTournamentById(id, getConnectionString()));
-        
-        // POST /api/tournaments - Crear un nuevo torneo
+
+        /// <summary>
+        /// Crea un nuevo torneo.
+        /// </summary>
+        /// <remarks>
+        /// Valida nombre obligatorio y número de equipos > 0. Estado por defecto: PROGRAMADO.
+        /// </remarks>
         group.MapPost("/", (CreateTournamentDto dto) => CreateTournament(dto, getConnectionString()));
-        
-        // PUT /api/tournaments/{id} - Actualizar un torneo
+
+        /// <summary>
+        /// Actualiza un torneo existente.
+        /// </summary>
+        /// <remarks>
+        /// Devuelve 404 si no existe. Devuelve el recurso actualizado.
+        /// </remarks>
         group.MapPut("/{id:int}", (int id, UpdateTournamentDto dto) => UpdateTournament(id, dto, getConnectionString()));
-        
-        // DELETE /api/tournaments/{id} - Eliminar un torneo
+
+        /// <summary>
+        /// Elimina un torneo por ID.
+        /// </summary>
+        /// <remarks>
+        /// Devuelve 204 en éxito o 404 si no existe.
+        /// </remarks>
         group.MapDelete("/{id:int}", (int id) => DeleteTournament(id, getConnectionString()));
     }
 
+    /// <summary>
+    /// Obtiene la lista de torneos.
+    /// </summary>
     private static async Task<IResult> GetAllTournaments(string connectionString)
     {
         try
@@ -50,6 +95,9 @@ public static class TournamentEndpoints
         }
     }
 
+    /// <summary>
+    /// Obtiene un torneo por identificador.
+    /// </summary>
     private static async Task<IResult> GetTournamentById(int id, string connectionString)
     {
         try
@@ -78,11 +126,13 @@ public static class TournamentEndpoints
         }
     }
 
+    /// <summary>
+    /// Crea un nuevo torneo.
+    /// </summary>
     private static async Task<IResult> CreateTournament(CreateTournamentDto dto, string connectionString)
     {
         try
         {
-            // Validaciones
             if (string.IsNullOrWhiteSpace(dto.Nombre_torneo))
                 return Results.BadRequest("El nombre del torneo es obligatorio");
                 
@@ -104,7 +154,6 @@ public static class TournamentEndpoints
                 }
             );
             
-            // Obtener el torneo creado
             var createdTournament = await connection.QueryFirstAsync<TournamentDto>(
                 @"SELECT ID_torneo AS IdTorneo, 
                          Nombre_torneo AS NombreTorneo, 
@@ -124,6 +173,9 @@ public static class TournamentEndpoints
         }
     }
 
+    /// <summary>
+    /// Actualiza un torneo existente.
+    /// </summary>
     private static async Task<IResult> UpdateTournament(int id, UpdateTournamentDto dto, string connectionString)
     {
         try
@@ -150,7 +202,6 @@ public static class TournamentEndpoints
             if (rowsAffected == 0)
                 return Results.NotFound($"Torneo con ID {id} no encontrado");
                 
-            // Obtener el torneo actualizado
             var updatedTournament = await connection.QueryFirstAsync<TournamentDto>(
                 @"SELECT ID_torneo AS IdTorneo, 
                          Nombre_torneo AS NombreTorneo, 
@@ -170,6 +221,9 @@ public static class TournamentEndpoints
         }
     }
 
+    /// <summary>
+    /// Elimina un torneo por identificador.
+    /// </summary>
     private static async Task<IResult> DeleteTournament(int id, string connectionString)
     {
         try
@@ -193,7 +247,9 @@ public static class TournamentEndpoints
     }
 }
 
-// DTOs para los torneos
+/// <summary>
+/// Representación de lectura de un torneo.
+/// </summary>
 public record TournamentDto(
     int IdTorneo,
     string NombreTorneo,
@@ -202,6 +258,9 @@ public record TournamentDto(
     string Estado
 );
 
+/// <summary>
+/// Modelo de creación para torneos.
+/// </summary>
 public record CreateTournamentDto(
     string Nombre_torneo,
     string? Descripcion,
@@ -209,6 +268,9 @@ public record CreateTournamentDto(
     string? Estado
 );
 
+/// <summary>
+/// Modelo de actualización para torneos.
+/// </summary>
 public record UpdateTournamentDto(
     string Nombre_torneo,
     string? Descripcion,

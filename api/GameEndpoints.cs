@@ -4,16 +4,32 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using System.Text.RegularExpressions;
 
+/// <summary>
+/// Endpoints de gestión de juegos, equipos, jugadores y eventos (puntos, faltas, undo).
+/// </summary>
+/// <remarks>
+/// - Agrupa rutas bajo <c>/api</c> y aplica la política <c>Admin</c> donde corresponde.
+/// - Utiliza Dapper para acceso a datos y SQL Server como persistencia.
+/// - Provee utilitarios locales para abrir conexiones, ejecutar comandos y validar entradas.
+/// </remarks>
 public static class GameEndpoints
 {
-    const string T = "HoopsDB.core."; // prefijo schema actualizado
+    const string T = "HoopsDB.core.";
 
+    /// <summary>
+    /// Mapea los endpoints del dominio de juego.
+    /// </summary>
+    /// <remarks>
+    /// - Juegos: listar, crear, obtener, iniciar, avanzar cuarto, terminar.
+    /// - Eventos: anotar, falta, quitar falta, quitar puntos, deshacer último evento.
+    /// - Equipos y jugadores: CRUD básico, logo binario y validaciones.
+    /// - Resúmenes: roster por juego y resumen de faltas por equipo/jugador.
+    /// </remarks>
     public static void MapGameEndpoints(this WebApplication app, Func<string> cs)
     {
         var g = app.MapGroup("/api");
         var adminG = app.MapGroup("/api").RequireAuthorization("Admin");
 
-        // ===== Helpers mínimos =====
         static SqlConnection Open(string cs) { var c = new SqlConnection(cs); c.Open(); return c; }
         static Task<T?> One<T>(SqlConnection c, string sql, object? p = null, SqlTransaction? tx = null)
             => c.QuerySingleOrDefaultAsync<T>(sql, p, tx);
@@ -21,7 +37,12 @@ public static class GameEndpoints
             => c.ExecuteAsync(sql, p, tx);
         static bool IsNullOrWhite(string? s) => string.IsNullOrWhiteSpace(s);
 
-        // ===== Games =====
+        /// <summary>
+        /// Lista los últimos juegos creados.
+        /// </summary>
+        /// <remarks>
+        /// Devuelve hasta 50 registros de `core.Matches` ordenados por `GameId` descendente.
+        /// </remarks>
         g.MapGet("/games", async () =>
         {
             using var c = new SqlConnection(cs());
@@ -29,13 +50,18 @@ public static class GameEndpoints
             return Results.Ok(rows);
         }).WithOpenApi();
 
+        /// <summary>
+        /// Crea un nuevo juego con nombres libres.
+        /// </summary>
+        /// <remarks>
+        /// Inserta en `core.Matches` y asegura el temporizador en `core.MatchTimers`. Duración por cuarto validada (10s, 30s, 5, 10 o 12 minutos).
+        /// </remarks>
         adminG.MapPost("/games", async ([FromBody] CreateGameDto body) =>
         {
             var home = IsNullOrWhite(body?.Home) ? "Local" : body!.Home!.Trim();
             var away = IsNullOrWhite(body?.Away) ? "Visitante" : body!.Away!.Trim();
-            var quarterMs = body?.QuarterMs ?? 720000; // Default 12 min
+            var quarterMs = body?.QuarterMs ?? 720000;
             
-            // Validate quarter duration (10s=10000ms, 30s=30000ms, 5min=300000ms, 10min=600000ms, 12min=720000ms)
             if (quarterMs != 10000 && quarterMs != 30000 && quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
                 quarterMs = 720000;
 
@@ -57,6 +83,12 @@ public static class GameEndpoints
             return Results.Created($"/api/games/{id}", new { gameId = id, home, away, quarterMs });
         }).WithOpenApi();
 
+        /// <summary>
+        /// Obtiene el detalle de un juego y sus eventos recientes.
+        /// </summary>
+        /// <remarks>
+        /// Incluye la fila de `core.Matches` y hasta 100 `core.MatchEvents` (más recientes primero).
+        /// </remarks>
         g.MapGet("/games/{id:int}", async (int id) =>
         {
             using var c = new SqlConnection(cs());
@@ -66,6 +98,12 @@ public static class GameEndpoints
             return Results.Ok(new { game, events });
         }).WithOpenApi();
 
+        /// <summary>
+        /// Inicia un juego programado.
+        /// </summary>
+        /// <remarks>
+        /// Cambia `Status` a IN_PROGRESS y pone el temporizador en ejecución.
+        /// </remarks>
         adminG.MapPost("/games/{id:int}/start", async (int id) =>
         {
             using var c = Open(cs());
@@ -79,6 +117,12 @@ public static class GameEndpoints
             return Results.NoContent();
         }).WithOpenApi();
 
+        /// <summary>
+        /// Avanza al siguiente cuarto o prórroga.
+        /// </summary>
+        /// <remarks>
+        /// Si tras el 4º cuarto hay ganador, exige finalizar el juego. En prórroga fija 5 minutos, en cuartos regulares conserva duración.
+        /// </remarks>
         adminG.MapPost("/games/{id:int}/advance-quarter", async (int id) =>
         {
             using var c = Open(cs());
@@ -90,26 +134,21 @@ public static class GameEndpoints
             if (!string.Equals(game.Status, "IN_PROGRESS", StringComparison.OrdinalIgnoreCase))
             { tx.Rollback(); return Results.BadRequest(new { error = "Juego no está IN_PROGRESS." }); }
 
-            // Check if game is tied after quarter 4 or overtime
             bool isTied = game.HomeScore == game.AwayScore;
             bool isAfterRegulation = game.Quarter >= 4;
             
-            // If after quarter 4+ and there's a winner, game should finish
             if (isAfterRegulation && !isTied)
             {
                 tx.Rollback(); 
                 return Results.BadRequest(new { error = "El juego debe finalizar - hay un ganador." });
             }
 
-            // Advance to next quarter/overtime
             await Exec(c, $"UPDATE {T}Matches SET Quarter = Quarter + 1 WHERE GameId=@id;", new { id }, tx);
             
-            // Determine duration: regular quarters use original duration, overtime is always 5 minutes
-            var quarterMs = isAfterRegulation ? 300000 : 0; // 5 minutes for overtime, 0 to use original for regular quarters
+            var quarterMs = isAfterRegulation ? 300000 : 0;
             
             if (quarterMs > 0)
             {
-                // Overtime: set to 5 minutes
                 await Exec(c, $@"
                     UPDATE c
                     SET c.Quarter = g.Quarter,
@@ -124,7 +163,6 @@ public static class GameEndpoints
             }
             else
             {
-                // Regular quarter: preserve original duration
                 await Exec(c, $@"
                     UPDATE c
                     SET c.Quarter = g.Quarter,
@@ -140,6 +178,12 @@ public static class GameEndpoints
             tx.Commit(); return Results.NoContent();
         }).WithOpenApi();
 
+        /// <summary>
+        /// Finaliza un juego en curso.
+        /// </summary>
+        /// <remarks>
+        /// Pone `Status=FINISHED` y detiene el temporizador.
+        /// </remarks>
         adminG.MapPost("/games/{id:int}/finish", async (int id) =>
         {
             using var c = Open(cs());
@@ -150,7 +194,12 @@ public static class GameEndpoints
             tx.Commit(); return Results.NoContent();
         }).WithOpenApi();
 
-        // ===== Score / Foul / Undo =====
+        /// <summary>
+        /// Registra una anotación (1, 2 o 3 puntos).
+        /// </summary>
+        /// <remarks>
+        /// Solo para juegos IN_PROGRESS. Crea evento en `core.MatchEvents` con `POINT_1|2|3` y suma al marcador correspondiente.
+        /// </remarks>
         adminG.MapPost("/games/{id:int}/score", async (int id, [FromBody] ScoreDto b) =>
         {
             var team = (b?.Team ?? "").Trim().ToUpperInvariant();
@@ -187,6 +236,12 @@ public static class GameEndpoints
             return Results.NoContent();
         }).WithOpenApi();
 
+        /// <summary>
+        /// Registra una falta.
+        /// </summary>
+        /// <remarks>
+        /// Inserta un evento `FOUL` en `core.MatchEvents` para el cuarto actual. Puede incluir `PlayerId` o dorsal.
+        /// </remarks>
         adminG.MapPost("/games/{id:int}/foul", async (int id, [FromBody] FoulDto b) =>
         {
             var team = (b?.Team ?? "").Trim().ToUpperInvariant();
@@ -207,6 +262,12 @@ public static class GameEndpoints
             return Results.NoContent();
         }).WithOpenApi();
 
+        /// <summary>
+        /// Quita la última falta registrada.
+        /// </summary>
+        /// <remarks>
+        /// Busca la última `FOUL` del equipo (y jugador si se especifica), la elimina y registra `REMOVE_FOUL` como auditoría.
+        /// </remarks>
         adminG.MapPost("/games/{id:int}/remove-foul", async (int id, [FromBody] FoulDto b) =>
         {
             var team = (b?.Team ?? "").Trim().ToUpperInvariant();
@@ -215,7 +276,6 @@ public static class GameEndpoints
             using var c = Open(cs());
             using var tx = c.BeginTransaction();
 
-            // Buscar la falta más reciente del equipo (y jugador si se especifica)
             var sql = $@"
                 SELECT TOP 1 EventId 
                 FROM {T}MatchEvents 
@@ -231,10 +291,8 @@ public static class GameEndpoints
                 return Results.BadRequest(new { error = "No se encontró falta para restar." }); 
             }
 
-            // Eliminar la falta encontrada
             await Exec(c, $"DELETE FROM {T}MatchEvents WHERE EventId=@eventId;", new { eventId }, tx);
 
-            // Registrar el evento de remoción de falta
             await Exec(c, $@"
                 INSERT INTO {T}MatchEvents(GameId, Quarter, Team, EventType, PlayerId)
                 SELECT @id, Quarter, @team, 'REMOVE_FOUL', @pid FROM {T}Matches WHERE GameId=@id;",
@@ -244,6 +302,12 @@ public static class GameEndpoints
             return Results.NoContent();
         }).WithOpenApi();
 
+        /// <summary>
+        /// Quita la última anotación registrada.
+        /// </summary>
+        /// <remarks>
+        /// Identifica el último `POINT_1|2|3`, descuenta del marcador si es posible y registra `REMOVE_SCORE` como auditoría.
+        /// </remarks>
         adminG.MapPost("/games/{id:int}/remove-score", async (int id, [FromBody] ScoreDto b) =>
         {
             var team = (b?.Team ?? "").Trim().ToUpperInvariant();
@@ -252,7 +316,6 @@ public static class GameEndpoints
             using var c = Open(cs());
             using var tx = c.BeginTransaction();
 
-            // Buscar la última anotación del equipo
             var lastScore = await One<(int EventId, string EventType)>(c, $@"
                 SELECT TOP 1 EventId, EventType 
                 FROM {T}MatchEvents 
@@ -265,20 +328,16 @@ public static class GameEndpoints
                 return Results.BadRequest(new { error = "No se encontró anotación para restar." }); 
             }
 
-            // Extraer puntos del tipo de evento
             var points = int.Parse(lastScore.EventType.Split('_')[1]);
 
-            // Restar puntos del marcador
             await Exec(c, $@"
                 UPDATE {T}Matches
                 SET HomeScore = CASE WHEN @team='HOME' THEN IIF(HomeScore>=@pts, HomeScore-@pts, HomeScore) ELSE HomeScore END,
                     AwayScore = CASE WHEN @team='AWAY' THEN IIF(AwayScore>=@pts, AwayScore-@pts, AwayScore) ELSE AwayScore END
                 WHERE GameId=@id;", new { id, team, pts = points }, tx);
 
-            // Eliminar el evento de anotación
             await Exec(c, $"DELETE FROM {T}MatchEvents WHERE EventId=@eventId;", new { eventId = lastScore.EventId }, tx);
 
-            // Registrar el evento de remoción de puntos
             await Exec(c, $@"
                 INSERT INTO {T}MatchEvents(GameId, Quarter, Team, EventType)
                 SELECT @id, Quarter, @team, 'REMOVE_SCORE' FROM {T}Matches WHERE GameId=@id;",
@@ -288,6 +347,12 @@ public static class GameEndpoints
             return Results.NoContent();
         }).WithOpenApi();
 
+        /// <summary>
+        /// Deshace el último evento de anotación o falta.
+        /// </summary>
+        /// <remarks>
+        /// Ajusta el marcador si se trataba de un `POINT_*`, inserta un evento `UNDO` y elimina el evento original.
+        /// </remarks>
         adminG.MapPost("/games/{id:int}/undo", async (int id) =>
         {
             using var c = Open(cs());
@@ -320,7 +385,12 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return Results.NoContent();
         }).WithOpenApi();
 
-        // ===== Teams & Players =====
+        /// <summary>
+        /// Lista equipos activos.
+        /// </summary>
+        /// <remarks>
+        /// Devuelve `TeamId`, `Name`, `City` y `CreatedAt` de `core.Club` con `Active=1`.
+        /// </remarks>
         g.MapGet("/teams", async () =>
         {
             using var c = new SqlConnection(cs());
@@ -328,7 +398,12 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return Results.Ok(rows);
         }).WithOpenApi();
 
-        // GET /api/teams/{teamId}/logo - devuelve el logo binario del equipo
+        /// <summary>
+        /// Devuelve el logo binario de un equipo.
+        /// </summary>
+        /// <remarks>
+        /// Responde archivo con tipo de contenido y nombre si existen metadatos; 404 si no hay logo.
+        /// </remarks>
         g.MapGet("/teams/{teamId:int}/logo", async (int teamId) =>
         {
             using var c = new SqlConnection(cs());
@@ -343,11 +418,16 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return Results.File(row.Logo, contentType: ct, fileDownloadName: fn, enableRangeProcessing: false);
         }).WithOpenApi();
 
+        /// <summary>
+        /// Crea un equipo.
+        /// </summary>
+        /// <remarks>
+        /// Valida nombre (solo letras/espacios). Inserta en `core.Club` como activo.
+        /// </remarks>
         adminG.MapPost("/teams", async ([FromBody] TeamCreateDto body) =>
         {
             var name = (body?.Name ?? "").Trim();
             if (IsNullOrWhite(name)) return Results.BadRequest(new { error = "Name requerido." });
-            // Solo letras (incluye acentos/ñ) y espacios
             var rx = new Regex("^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$");
             if (!rx.IsMatch(name)) return Results.BadRequest(new { error = "Nombre inválido. Solo letras y espacios." });
 
@@ -361,7 +441,12 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             catch (SqlException ex) when (ex.Number is 2601 or 2627) { return Results.Conflict(new { error = "Nombre duplicado." }); }
         }).WithOpenApi();
 
-        // DELETE /api/teams/{teamId} -> baja lógica (Active=0)
+        /// <summary>
+        /// Da de baja lógica un equipo.
+        /// </summary>
+        /// <remarks>
+        /// Marca `Active=0` en `core.Club` para el `teamId` indicado.
+        /// </remarks>
         adminG.MapDelete("/teams/{teamId:int}", async (int teamId) =>
         {
             using var c = new SqlConnection(cs());
@@ -369,7 +454,12 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return rows > 0 ? Results.NoContent() : Results.NotFound();
         }).WithOpenApi();
 
-        // PATCH /api/teams/{teamId} -> actualizar nombre y/o ciudad
+        /// <summary>
+        /// Actualiza nombre y/o ciudad de un equipo.
+        /// </summary>
+        /// <remarks>
+        /// Valida el formato del nombre si se proporciona. Retorna 204 si hay cambios o 404 si no existe.
+        /// </remarks>
         adminG.MapPatch("/teams/{teamId:int}", async (int teamId, [FromBody] UpdateTeamDto b) =>
         {
             string? name = b?.Name?.Trim();
@@ -398,7 +488,12 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             }
         }).WithOpenApi();
 
-        // POST /api/teams/{teamId}/logo -> actualizar logo
+        /// <summary>
+        /// Sube o actualiza el logo binario de un equipo.
+        /// </summary>
+        /// <remarks>
+        /// Almacena bytes y metadatos del archivo en `core.Club` para el equipo indicado.
+        /// </remarks>
         adminG.MapPost("/teams/{teamId:int}/logo", async (int teamId, [FromForm] IFormFile? logo) =>
         {
             if (logo == null || logo.Length == 0) return Results.BadRequest(new { error = "Archivo requerido." });
@@ -416,14 +511,19 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return ok > 0 ? Results.NoContent() : Results.NotFound();
         }).DisableAntiforgery().WithOpenApi();
 
+        /// <summary>
+        /// Crea un juego emparejando dos equipos existentes.
+        /// </summary>
+        /// <remarks>
+        /// Inserta en `core.Matches` referenciando `HomeTeamId` y `AwayTeamId` y crea registro en `core.MatchTimers`.
+        /// </remarks>
         adminG.MapPost("/games/pair", async ([FromBody] PairDto body) =>
         {
             if (body.HomeTeamId <= 0 || body.AwayTeamId <= 0 || body.HomeTeamId == body.AwayTeamId)
                 return Results.BadRequest(new { error = "Equipos inválidos." });
             
-            var quarterMs = body.QuarterMs ?? 720000; // Default 12 min
+            var quarterMs = body.QuarterMs ?? 720000;
             
-            // Validate quarter duration (10s=10000ms, 30s=30000ms, 5min=300000ms, 10min=600000ms, 12min=720000ms)
             if (quarterMs != 10000 && quarterMs != 30000 && quarterMs != 300000 && quarterMs != 600000 && quarterMs != 720000)
                 quarterMs = 720000;
 
@@ -454,6 +554,12 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return Results.Created($"/api/games/{id}", new { gameId = id, home, away, quarterMs });
         }).WithOpenApi();
 
+        /// <summary>
+        /// Lista jugadores de un equipo.
+        /// </summary>
+        /// <remarks>
+        /// Ordena por dorsal (si existe) y nombre. Solo lectura.
+        /// </remarks>
         g.MapGet("/teams/{teamId:int}/players", async (int teamId) =>
         {
             using var c = new SqlConnection(cs());
@@ -464,18 +570,22 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return Results.Ok(rows);
         }).WithOpenApi();
 
+        /// <summary>
+        /// Crea un jugador en un equipo.
+        /// </summary>
+        /// <remarks>
+        /// Valida nombre, estatura (1.20–2.50 m) y edad (10–70). Dorsal único por equipo.
+        /// </remarks>
         adminG.MapPost("/teams/{teamId:int}/players", async (int teamId, [FromBody] CreatePlayerDto body) =>
         {
             var name = (body?.Name ?? "").Trim();
             if (IsNullOrWhite(name)) return Results.BadRequest(new { error = "Nombre es requerido." });
 
-            // Validar altura si se proporciona
             if (body?.Height.HasValue == true && (body.Height < 1.20m || body.Height > 2.50m))
             {
                 return Results.BadRequest(new { error = "La estatura debe estar entre 1.20 y 2.50 metros." });
             }
 
-            // Validar edad si se proporciona
             if (body?.Age.HasValue == true && (body.Age < 10 || body.Age > 70))
             {
                 return Results.BadRequest(new { error = "La edad debe estar entre 10 y 70 años." });
@@ -509,15 +619,19 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             }
         }).WithOpenApi();
 
+        /// <summary>
+        /// Actualiza campos de un jugador.
+        /// </summary>
+        /// <remarks>
+        /// Permite cambios parciales. Valida estatura y edad si se incluyen.
+        /// </remarks>
         adminG.MapPatch("/players/{playerId:int}", async (int playerId, [FromBody] UpdatePlayerDto b) =>
         {
-            // Validar altura si se proporciona
             if (b?.Height.HasValue == true && (b.Height < 1.20m || b.Height > 2.50m))
             {
                 return Results.BadRequest(new { error = "La estatura debe estar entre 1.20 y 2.50 metros." });
             }
 
-            // Validar edad si se proporciona
             if (b?.Age.HasValue == true && (b.Age < 10 || b.Age > 70))
             {
                 return Results.BadRequest(new { error = "La edad debe estar entre 10 y 70 años." });
@@ -547,6 +661,12 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return ok > 0 ? Results.NoContent() : Results.NotFound();
         }).WithOpenApi();
 
+        /// <summary>
+        /// Elimina un jugador por identificador.
+        /// </summary>
+        /// <remarks>
+        /// Operación destructiva: borra la fila en `core.Athletes`.
+        /// </remarks>
         adminG.MapDelete("/players/{playerId:int}", async (int playerId) =>
         {
             using var c = new SqlConnection(cs());
@@ -554,7 +674,12 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return ok > 0 ? Results.NoContent() : Results.NotFound();
         }).WithOpenApi();
 
-        // ===== Rosters por juego y resumen de faltas =====
+        /// <summary>
+        /// Obtiene el roster por juego para el lado indicado.
+        /// </summary>
+        /// <remarks>
+        /// Resuelve `teamId` a partir del juego si no está set y lista jugadores del equipo local o visitante.
+        /// </remarks>
         g.MapGet("/games/{id:int}/players/{side}", async (int id, string side) =>
         {
             var s = (side ?? "").ToUpperInvariant();
@@ -581,6 +706,12 @@ DELETE FROM {T}MatchEvents WHERE EventId=@eid;";
             return Results.Ok(rows);
         }).WithOpenApi();
 
+        /// <summary>
+        /// Resumen de faltas por equipo y por jugador.
+        /// </summary>
+        /// <remarks>
+        /// Agrega eventos `FOUL` por cuarto y equipo, y por jugador si `PlayerId` no es nulo.
+        /// </remarks>
         g.MapGet("/games/{id:int}/fouls/summary", async (int id) =>
         {
             using var c = new SqlConnection(cs());
