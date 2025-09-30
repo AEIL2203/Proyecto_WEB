@@ -87,6 +87,35 @@ services:
       - caddy_config:/config
     networks:
       - marcador_network
+    profiles: ["caddy"]
+
+  proxy_nginx:
+    image: nginx:alpine
+    container_name: marcador_proxy_nginx
+    depends_on:
+      ui:
+        condition: service_started
+      api:
+        condition: service_started
+    ports:
+      - "80:80"
+      - "443:443"  # se activará tras instalar certificados y cambiar a config HTTPS
+    volumes:
+      - ./Proxy/nginx.http.conf:/etc/nginx/conf.d/default.conf:ro
+      - certbot-www:/var/www/certbot
+      - certbot-etc:/etc/letsencrypt
+    networks:
+      - marcador_network
+    profiles: ["all"]
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: marcador_certbot
+    volumes:
+      - certbot-www:/var/www/certbot
+      - certbot-etc:/etc/letsencrypt
+    networks:
+      - marcador_network
     profiles: ["all"]
 
 networks:
@@ -96,3 +125,5 @@ networks:
 volumes:
   caddy_data:
   caddy_config:
+  certbot-www:
+  certbot-etc:
