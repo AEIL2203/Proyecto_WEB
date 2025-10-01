@@ -110,7 +110,7 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  // ===== util: PascalCase -> camelCase =====
+  // Convierte PascalCase a camelCase
   private toCamel<T>(obj: any): T {
     if (Array.isArray(obj)) return obj.map(v => this.toCamel(v)) as T;
     if (obj && typeof obj === 'object') {
@@ -124,7 +124,7 @@ export class ApiService {
     return obj as T;
   }
 
-  // ===== util: camelCase -> snake_case =====
+  // Convierte camelCase a snake_case
   private toSnake(obj: any): any {
     if (Array.isArray(obj)) return obj.map(v => this.toSnake(v));
     if (obj && typeof obj === 'object') {
@@ -143,7 +143,7 @@ export class ApiService {
     return s.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(s) ? s : `${s}Z`;
   }
 
-  // ========== Juegos ==========
+  // Endpoints de juegos
   listGames(): Observable<Game[]> {
     return this.http.get<any[]>(`${this.base}/games`).pipe(
       map(rows => this.toCamel<any[]>(rows)),
@@ -156,7 +156,7 @@ export class ApiService {
         homeScore: r.homeScore as number,
         awayScore: r.awayScore as number,
         createdAt: this.ensureUtcIso(r.createdAt as string),
-        // NUEVO (si vienen en la respuesta)
+        // IDs de equipos si están disponibles
         homeTeamId: (r.homeTeamId ?? r.hometeamid) ?? null,
         awayTeamId: (r.awayTeamId ?? r.awayteamid) ?? null,
       } as Game)))
@@ -186,7 +186,7 @@ export class ApiService {
           homeScore: game.homeScore,
           awayScore: game.awayScore,
           createdAt: this.ensureUtcIso(game.createdAt),
-          // NUEVO (si existen)
+          // IDs de equipos si existen
           homeTeamId: game.homeTeamId ?? game.hometeamid ?? null,
           awayTeamId: game.awayTeamId ?? game.awayteamid ?? null,
         };
@@ -200,30 +200,30 @@ export class ApiService {
   }
 
 
-  // ========== Flow ==========
+  // Control de flujo del juego
   start(id: number)   { return this.http.post(`${this.base}/games/${id}/start`, {}); }
   advance(id: number) { return this.http.post(`${this.base}/games/${id}/advance-quarter`, {}); }
   finish(id: number)  { return this.http.post(`${this.base}/games/${id}/finish`, {}); }
 
-  // ========== Acciones ==========
+  // Acciones del juego
   score(id: number, team: 'HOME'|'AWAY', points: 1|2|3, opts?: { playerId?: number; playerNumber?: number }) {
     const body: any = { team, points, playerId: opts?.playerId ?? null, playerNumber: opts?.playerNumber ?? null };
     return this.http.post(`${this.base}/games/${id}/score`, body);
   }
 
-  // (ACTUALIZADO) Foul acepta jugador opcional
+  // Registra falta con jugador opcional
   foul(id: number, team: 'HOME'|'AWAY', opts?: { playerId?: number; playerNumber?: number }) {
     const body: any = { team, playerId: opts?.playerId ?? null, playerNumber: opts?.playerNumber ?? null };
     return this.http.post(`${this.base}/games/${id}/foul`, body);
   }
 
-  // NUEVO: Restar falta
+  // Elimina la última falta
   removeFoul(id: number, team: 'HOME'|'AWAY', opts?: { playerId?: number; playerNumber?: number }) {
     const body: any = { team, playerId: opts?.playerId ?? null, playerNumber: opts?.playerNumber ?? null };
     return this.http.post(`${this.base}/games/${id}/remove-foul`, body);
   }
 
-  // NUEVO: Restar puntos (última anotación)
+  // Elimina la última anotación
   removeScore(id: number, team: 'HOME'|'AWAY') {
     const body: any = { team };
     return this.http.post(`${this.base}/games/${id}/remove-score`, body);
@@ -233,7 +233,7 @@ export class ApiService {
     return this.http.post(`${this.base}/games/${id}/undo`, {});
   }
 
-  /* ========== Equipos ========== */
+  // Endpoints de equipos
   listTeams(): Observable<Team[]> {
     return this.http.get<any[]>(`${this.base}/teams`).pipe(
       map(rows => rows.map(r => ({
@@ -245,7 +245,7 @@ export class ApiService {
     );
   }
 
-  /* ========== Equipos ========== */
+  // Crear equipos
   createTeam(name: string): Observable<{ teamId: number; name: string }>;
   createTeam(payload: { name: string; city?: string | null }): Observable<{ teamId: number; name: string }>;
   createTeam(arg: string | { name: string; city?: string | null }): Observable<{ teamId: number; name: string }> {
@@ -289,7 +289,7 @@ export class ApiService {
   }
 
 
-  /* ========== Emparejar (crear juego desde IDs de equipo) ========== */
+  // Crear juego entre equipos registrados
   pairGame(homeTeamId: number, awayTeamId: number, quarterMs?: number): Observable<{ gameId: number }> {
     const body: any = { homeTeamId, awayTeamId };
     if (quarterMs) body.quarterMs = quarterMs;
@@ -298,7 +298,7 @@ export class ApiService {
     );
   }
 
-  /* ========== Jugadores (por equipo) ========== */
+  // Jugadores por equipo
   listPlayers(teamId: number): Observable<Player[]> {
     return this.http.get<any[]>(`${this.base}/teams/${teamId}/players`).pipe(
       map(rows => this.toCamel<any[]>(rows))
@@ -327,7 +327,7 @@ export class ApiService {
     return this.http.delete(`${this.base}/players/${playerId}`);
   }
 
-  /* ========== Jugadores por juego (HOME/AWAY) ========== */
+  // Jugadores por lado del juego
   listGamePlayers(gameId: number, side: 'HOME'|'AWAY'): Observable<Player[]> {
     return this.http
       .get<any[]>(`${this.base}/games/${gameId}/players/${side}`)
@@ -335,13 +335,13 @@ export class ApiService {
   }
 
 
-  /* ========== Resumen de faltas ========== */
+  // Resumen de faltas
   getFoulSummary(id: number): Observable<FoulSummary> {
     return this.http.get<any>(`${this.base}/games/${id}/fouls/summary`)
       .pipe(map(r => this.toCamel<FoulSummary>(r)));
   }
 
-  /* ========== Admin: Usuarios ========== */
+  // Gestión de usuarios
   createUser(payload: { userName: string; password: string; email?: string; role?: string }) {
     return this.http.post(`${this.base}/auth/register`, payload);
   }
@@ -362,7 +362,7 @@ export class ApiService {
     return this.http.delete(`${this.base}/admin/users/${userId}`);
   }
 
-  /* ===== Torneos ===== */
+  // Endpoints de torneos
   getTournaments(): Observable<Tournament[]> {
     return this.http.get<Tournament[]>(`${this.base}/tournaments`).pipe(
       map(tournaments => tournaments.map(t => this.toCamel<Tournament>(t)))

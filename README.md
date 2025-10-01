@@ -1,6 +1,6 @@
-"# Marcador de Baloncesto
+# Marcador de Baloncesto
 
-Aplicación full‑stack para gestionar marcadores de baloncesto con control de reloj, faltas, plantillas y resultados.
+App web para llevar el marcador de partidos de basketball en tiempo real. Incluye login de usuarios, manejo de torneos, cronómetro, faltas y una pantalla pública para que vean los espectadores.
 
 ## Stack y versiones
 
@@ -11,6 +11,15 @@ Aplicación full‑stack para gestionar marcadores de baloncesto con control de 
   - `@angular/* 18.2.x`, `@angular/ssr 18.2.20`, `rxjs 7.8.x`, `zone.js 0.14.x`, `typescript 5.5.x`
   - Node.js 20 (imagen `node:20` para build)
   - Servida con NGINX (imagen `nginx:alpine`)
+
+## Qué hace
+
+- **Login y usuarios**: Sistema básico con admin y usuarios normales
+- **Marcador en vivo**: Puntos, faltas, cronómetro que funciona en tiempo real
+- **Torneos**: Puedes crear torneos y organizar los equipos
+- **Pantalla pública**: Una página limpia para proyectar en TV sin login
+- **Sonidos**: Silbatos y efectos cuando pasan cosas en el juego
+- **Estadísticas**: Ve los números por jugador y equipo al final
 
 ## Estructura de carpetas
 
@@ -46,17 +55,17 @@ Archivo: `docker-compose.yml`
 
 Perfiles disponibles: `db`, `api`, `ui`, `all`.
 
-### Levantar todo
+### Correr todo
 
 ```bash
 docker compose --profile all up -d --build
 ```
 
-Servicios:
+Después de unos minutos:
 
-- UI: http://localhost:4200
-- API: http://localhost:8080 (Swagger en dev)
-- SQL Server: localhost, puerto 1433
+- Frontend: http://localhost:4200
+- API: http://localhost:8080 
+- Base de datos: localhost:1433
 
 ### Levantar por partes
 
@@ -107,91 +116,107 @@ npm install
 npm start  # http://localhost:4200 (proxy/URLs según configuración)
 ```
 
-## Esquema de base de datos (resumen)
+## Base de datos
 
-Esquema `HoopsDB.core` creado por `db/init.sql`:
+Se crea automáticamente el esquema `HoopsDB.core` con estas tablas:
 
-- __Club__: equipos (`TeamId`, `Name` único)
-- __Matches__: juegos con marcador y estado (`SCHEDULED`/`IN_PROGRESS`/`FINISHED`)
-- __MatchEvents__: eventos por juego (POINT_1/2/3, FOUL, REMOVE_*, UNDO; incluye `PlayerId` opcional)
-- __MatchTimers__: temporizador del juego por cuarto (`QuarterMs`, `RemainingMs`, `Running`)
-- __Athletes__: jugadores por equipo (dorsal único por equipo cuando no es NULL)
-- Índices para consultas rápidas: `IX_MatchEvents_GameId_EventId`, `IX_Matches_Status`, `IX_MatchEvents_PlayerId`, `IX_Matches_TeamIds`, `IX_MatchEvents_FoulsFast`
+- **Users**: Los usuarios del sistema con sus roles
+- **Club**: Los equipos (nombre, ciudad, logo)
+- **Matches**: Los partidos con su estado
+- **MatchEvents**: Cada punto y falta que pasa en el juego
+- **MatchTimers**: El cronómetro de cada partido
+- **Athletes**: Los jugadores de cada equipo
+- **Tournaments**: Los torneos
 
-## API REST (resumen)
+Tiene índices para que vaya rápido cuando hay muchos datos.
 
-Base URL: `http://localhost:8080/api`
+## Endpoints principales
 
-- __GET__ `/games` → lista últimos juegos
-- __POST__ `/games` `{ home?, away?, quarterMs? }` → crea juego (12min por defecto)
-- __GET__ `/games/{id}` → detalle del juego + eventos
-- __POST__ `/games/{id}/start` → inicia juego (status `IN_PROGRESS`)
-- __POST__ `/games/{id}/advance-quarter` → avanza cuarto; si es OT, fija 5min; valida empate/regla de finalización
-- __POST__ `/games/{id}/finish` → finaliza juego
+La API está en `http://localhost:8080/api`
 
-- __POST__ `/games/{id}/score` `{ team: HOME|AWAY, points: 1|2|3, playerId?, playerNumber? }` → anota
-- __POST__ `/games/{id}/remove-score` `{ team }` → elimina última anotación del equipo y ajusta marcador
-- __POST__ `/games/{id}/foul` `{ team, playerId?, playerNumber? }` → registra falta
-- __POST__ `/games/{id}/remove-foul` `{ team, playerId? }` → elimina última falta del equipo (opcionalmente del jugador)
-- __POST__ `/games/{id}/undo` → deshace último evento de puntos o falta (registra `UNDO`)
+**Login y registro:**
+- `POST /auth/login` - hacer login
+- `POST /auth/register` - registrarse (queda como usuario normal)
+- `POST /auth/register-first` - crear el primer admin
 
-- __GET__ `/teams` → lista equipos
-- __POST__ `/teams` `{ name }` → crea equipo (solo letras y espacios)
-- __GET__ `/games/{id}/players/{side}` → roster HOME/AWAY del juego
-- __GET__ `/games/{id}/fouls/summary` → resumen de faltas por equipo y jugador
-- __POST__ `/teams/{teamId}/players` `{ name, number?, position? }` → crea jugador
-- __PATCH__ `/players/{playerId}` `{ number?, name?, position?, active? }` → actualiza jugador
-- __DELETE__ `/players/{playerId}` → elimina jugador
+**Partidos:**
+- `GET /games` - ver partidos
+- `POST /games` - crear partido nuevo
+- `POST /games/{id}/start` - empezar el partido (solo admin)
+- `POST /games/{id}/score` - anotar puntos (solo admin)
+- `POST /games/{id}/foul` - marcar falta (solo admin)
+- `POST /games/{id}/undo` - deshacer última acción (solo admin)
 
-### Reloj (Clock)
+**Equipos:**
+- `GET /teams` - ver equipos
+- `POST /teams` - crear equipo (solo admin)
+- `POST /teams/{id}/players` - agregar jugador (solo admin)
 
-- __GET__ `/games/{id}/clock` → estado (`remainingMs`, `quarter`, `running`)
-- __POST__ `/games/{id}/clock/start`
-- __POST__ `/games/{id}/clock/pause`
-- __POST__ `/games/{id}/clock/reset` `{ quarterMs? }`
+**Cronómetro:**
+- `GET /games/{id}/clock` - ver estado del reloj
+- `POST /games/{id}/clock/start` - iniciar cronómetro
+- `POST /games/{id}/clock/pause` - pausar cronómetro
 
-## UI (Angular)
+Los endpoints marcados con "solo admin" requieren estar logueado como administrador.
 
-- Scripts: `npm start` (dev), `npm run build` (prod). SSR disponible via `serve:ssr:marcador` si se quiere probar con Node.
-- Build de producción queda servido por NGINX en el contenedor `ui`.
+## Cómo usar
 
-## Funcionamiento
+1. **Primer setup**: Registra el primer admin en `/auth/register-first`
+2. **Crear equipos**: Agrega los equipos y sus jugadores
+3. **Hacer un partido**: Crea el juego y selecciona los equipos
+4. **Controlar el juego**: Usa `/controls/{id}` para llevar el marcador
+5. **Pantalla pública**: Abre `/display/{id}` en otra pestaña para proyectar
 
-- __Flujo típico de uso__
-  1. __Crear equipos__: `POST /api/teams { name }` o desde la UI si está habilitado ese flujo.
-  2. __Crear juego__: 
-     - Rápido: `POST /api/games { home?, away?, quarterMs? }`.
-     - Emparejando equipos existentes: `POST /api/games/pair { homeTeamId, awayTeamId, quarterMs? }`.
-  3. __Iniciar reloj__: `POST /api/games/{id}/start` y/o `POST /api/games/{id}/clock/start`.
-  4. __Gestionar cronómetro__: `clock/pause`, `clock/reset { quarterMs? }` según se requiera.
-  5. __Registrar acciones__: 
-     - Anotaciones: `POST /api/games/{id}/score { team, points(1|2|3), playerId? }`.
-     - Faltas: `POST /api/games/{id}/foul { team, playerId? }`.
-     - Correcciones: `remove-score`, `remove-foul`, o `undo` (revierte el último evento de puntos o falta).
-  6. __Cambiar de cuarto__: `POST /api/games/{id}/advance-quarter`.
-     - Si es después del 4º cuarto y el marcador NO está empatado, la API impide avanzar (el juego debe finalizar).
-     - Si es prórroga (OT), la duración se fija en 5 minutos (300000 ms).
-  7. __Finalizar juego__: `POST /api/games/{id}/finish`.
+Para usuarios normales solo pueden ver, no pueden crear ni editar nada.
 
-- __Lógica de bonus y OUT__
-  - La UI calcula el __BONUS__ por equipo por cuarto a partir del resumen de faltas (`GET /api/games/{id}/fouls/summary`). Por diseño, entra en bonus a partir de 5 faltas en el cuarto.
-  - La UI marca jugadores __OUT__ cuando alcanzan 5 faltas personales (etiqueta visual). La API registra eventos de falta, pero no “bloquea” acciones; el backoffice/operador decide.
+## Detalles técnicos
 
-- __Arquitectura en ejecución__
-  - La __UI__ (contenedor `ui`) se sirve con NGINX y consume la API mediante HTTP.
-  - La __API__ (contenedor `api`) expone `:8080` y usa `DB_CONNECTION_STRING` (inyectada por `docker-compose.yml`) para conectarse a __SQL Server__ (servicio `db`).
-  - `db_init` espera a que `db` esté healthy y ejecuta `db/init.sql` (y `db/seed.sql` si existe) para provisionar el esquema `HoopsDB.core`.
+**Seguridad:**
+- Login con JWT tokens que expiran solos
+- Los admins pueden hacer todo, usuarios normales solo ver
+- Las contraseñas se guardan hasheadas
 
-- __Persistencia y auditoría__
-  - Cada anotación/falta se registra en `core.MatchEvents` con `Quarter`, `Team`, `EventType` y `PlayerId` opcional. Esto permite reconstruir el estado, conteos de faltas por cuarto y estadísticas.
+**Reglas del juego:**
+- BONUS se activa con 5 faltas por equipo en el cuarto
+- Jugadores quedan OUT con 5 faltas personales
+- Hay sonidos para los eventos importantes
+- Tiempo extra son 5 minutos automáticamente
 
-## Troubleshooting
+**Como funciona:**
+- Frontend en Angular con NGINX
+- Backend en .NET 8 con SQL Server
+- Todo corre con Docker
+- Cada acción se guarda en la base para hacer estadísticas después
 
-- __SQL Server no arranca__: verifica `SA_PASSWORD` cumple complejidad (ya incluida), y que el puerto 1433 no esté ocupado.
-- __`db_init` falla__: revisa logs del contenedor y la existencia de `db/init.sql`. Asegúrate de que `db` esté healthy primero.
-- __API 500/Conexión__: confirma `DB_CONNECTION_STRING` generado en `docker-compose.yml` apunte a `Server=db,1433;...`.
-- __UI no carga__: espera a que `api` esté arriba; el servicio `ui` se reinicia si hay fallos de DNS iniciales.
+## Si algo no funciona
 
-## Licencia
+**Base de datos:**
+- SQL Server no arranca → revisar que el puerto 1433 esté libre
+- db_init falla → ver los logs del contenedor
 
-Uso académico.
+**Login:**
+- No puedo entrar → verificar usuario y contraseña
+- Token expirado → hacer login de nuevo
+- No tengo permisos → pedir al admin que te cambie el rol
+
+**Funcionalidad:**
+- No puedo crear cosas → necesitas ser admin
+- El marcador no se actualiza → verificar que el partido esté iniciado
+- Los sonidos no van → permitir autoplay en el navegador
+
+**Conectividad:**
+- La página no carga → esperar que la API esté lista
+- Errores de CORS → reiniciar los contenedores
+
+## URLs importantes
+
+- Frontend: http://localhost:4200
+- API: http://localhost:8080
+- Base de datos: localhost:1433
+
+**Páginas útiles:**
+- `/login` - para entrar
+- `/controls/{id}` - controlar un partido (solo admin)
+- `/display/{id}` - pantalla pública para proyectar
+- `/results?id={id}` - ver resultados
+- `/admin/users` - gestionar usuarios (solo admin)

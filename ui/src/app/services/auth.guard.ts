@@ -8,7 +8,7 @@ export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);
   const platformId = inject(PLATFORM_ID);
-  // En SSR (no navegador), permitir navegación; el cliente aplicará el guard correctamente
+  // Permitir navegación en SSR, validar en el cliente
   if (!isPlatformBrowser(platformId)) return true;
 
   if (auth.isAuthenticated()) return true;

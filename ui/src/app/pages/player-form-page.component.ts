@@ -21,7 +21,7 @@ export class PlayerFormPageComponent {
     name: string;
     number?: number | null;
     position?: string | null;
-    height?: number | null;      // en centímetros
+    height?: number | null;      // en cm
     age?: number | null;         
     nationality?: string | null; 
   } = {
@@ -45,7 +45,7 @@ export class PlayerFormPageComponent {
   ) {
     this.api.listTeams().subscribe(ts => {
       this.teams = ts;
-      // Prefijar equipo si viene en la URL
+      // Preseleccionar equipo desde URL
       const teamIdParam = this.route.snapshot.queryParamMap.get('teamId');
       if (teamIdParam) {
         const id = +teamIdParam;
@@ -66,7 +66,7 @@ export class PlayerFormPageComponent {
       this.errorMsg = 'El nombre es requerido';
       return;
     }
-    // Validación de número si viene
+    // Validar número de camiseta
     let num: number | undefined;
     if (this.model.number !== null && this.model.number !== undefined && (this.model.number as any) !== '') {
       if (!Number.isInteger(this.model.number) || (this.model.number as number) < 0 || (this.model.number as number) > 99) {
@@ -76,18 +76,18 @@ export class PlayerFormPageComponent {
       num = this.model.number ?? undefined;
     }
 
-    // Validación de estatura si viene
+    // Validar estatura
     let height: number | undefined;
     if (this.model.height !== null && this.model.height !== undefined) {
       if (this.model.height < 120 || this.model.height > 250) {
         this.errorMsg = 'La estatura debe estar entre 120 y 250 cm';
         return;
       }
-      // Convertir a metros para el backend
+      // Convertir cm a metros
       height = this.model.height / 100;
     }
 
-    // Validación de edad si viene
+    // Validar edad
     let age: number | undefined;
     if (this.model.age !== null && this.model.age !== undefined) {
       if (this.model.age < 10 || this.model.age > 70) {

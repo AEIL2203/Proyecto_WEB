@@ -4,7 +4,7 @@ import { Observable, Subscription } from 'rxjs';
 import { Game, Player, ApiService, FoulSummary } from '../services/api.service';
 import { ClockService, ClockState } from '../services/clock.service';
 
-// Pipe para convertir milisegundos a formato MM:SS
+// Convierte milisegundos a formato MM:SS
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({ name: 'msToClock', standalone: true })
@@ -29,14 +29,14 @@ export class ScoreboardComponent implements OnInit, OnDestroy, OnChanges {
   @Input({ required: true }) game!: Game;
   @Input() showPlayerManagement = true;
 
-  // Clock state (read-only)
+  // Estado del reloj
   clockState$?: Observable<ClockState>;
   
-  // Players (read-only)
+  // Jugadores de ambos equipos
   homePlayers: Player[] = [];
   awayPlayers: Player[] = [];
   
-  // Fouls tracking (read-only)
+  // Seguimiento de faltas
   private foulSummary: FoulSummary = { team: [], players: [] };
   private subscriptions: Subscription[] = [];
 
@@ -72,28 +72,28 @@ export class ScoreboardComponent implements OnInit, OnDestroy, OnChanges {
   private loadPlayers() {
     if (!this.game?.gameId) return;
 
-    // Load home team players
+    // Cargar jugadores del equipo local
     if (this.game.homeTeamId) {
       this.apiService.listPlayers(this.game.homeTeamId).subscribe({
         next: (players) => this.homePlayers = players,
         error: () => this.homePlayers = []
       });
     } else {
-      // If no homeTeamId, try to get players by game
+      // Si no hay ID de equipo, obtener por juego
       this.apiService.listGamePlayers(this.game.gameId, 'HOME').subscribe({
         next: (players) => this.homePlayers = players,
         error: () => this.homePlayers = []
       });
     }
 
-    // Load away team players
+    // Cargar jugadores del equipo visitante
     if (this.game.awayTeamId) {
       this.apiService.listPlayers(this.game.awayTeamId).subscribe({
         next: (players) => this.awayPlayers = players,
         error: () => this.awayPlayers = []
       });
     } else {
-      // If no awayTeamId, try to get players by game
+      // Si no hay ID de equipo, obtener por juego
       this.apiService.listGamePlayers(this.game.gameId, 'AWAY').subscribe({
         next: (players) => this.awayPlayers = players,
         error: () => this.awayPlayers = []
@@ -110,7 +110,7 @@ export class ScoreboardComponent implements OnInit, OnDestroy, OnChanges {
     });
   }
 
-  // Display-only method for showing player fouls
+  // Faltas de un jugador
   getPlayerFouls(playerId: number): number {
     const currentQuarter = this.game.quarter;
     return this.foulSummary.players
@@ -118,7 +118,7 @@ export class ScoreboardComponent implements OnInit, OnDestroy, OnChanges {
       .reduce((total, f) => total + f.fouls, 0);
   }
 
-  // Get total team fouls for current quarter
+  // Faltas del equipo en el cuarto actual
   getTeamFouls(team: 'HOME' | 'AWAY'): number {
     const currentQuarter = this.game.quarter;
     return this.foulSummary.team
@@ -126,14 +126,14 @@ export class ScoreboardComponent implements OnInit, OnDestroy, OnChanges {
       .reduce((total, f) => total + f.fouls, 0);
   }
 
-  // Get total team fouls for entire game
+  // Faltas totales del equipo en el juego
   getTotalTeamFouls(team: 'HOME' | 'AWAY'): number {
     return this.foulSummary.team
       .filter(f => f.team === team)
       .reduce((total, f) => total + f.fouls, 0);
   }
 
-  // Get quarter text for display (Q1-Q4, OT1, OT2, etc.)
+  // Texto del cuarto para mostrar
   getQuarterText(): string {
     if (!this.game) return 'Q1';
     

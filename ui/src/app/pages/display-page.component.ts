@@ -22,7 +22,7 @@ export class DisplayPageComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.gameId = Number(this.route.snapshot.paramMap.get('id'));
-    // Polling ligero para sincronizar el marcador público
+    // Actualización automática del marcador
     this.sub = interval(2000)
       .pipe(switchMap(() => this.api.getGame(this.gameId)))
       .subscribe((d) => (this.detail = d));

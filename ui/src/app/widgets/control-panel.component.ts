@@ -15,27 +15,27 @@ export class ControlPanelComponent implements OnChanges {
   @Input({ required: true }) game!: Game;
   @Output() changed = new EventEmitter<void>();
 
-  // Listas de jugadores del partido (lado HOME/AWAY)
+  // Jugadores de cada equipo en el partido
   homePlayers: any[] = [];
   awayPlayers: any[] = [];
 
-  // Selección actual para registrar falta por jugador
+  // Jugador seleccionado para registrar faltas
   selHomePlayerId?: number;
   selAwayPlayerId?: number;
 
-  // Conteo de faltas del cuarto actual
+  // Faltas por equipo en el cuarto actual
   teamFouls = { home: 0, away: 0 };
-  // Conteo de faltas por jugador (total acumulado, por juego)
+  // Faltas acumuladas por jugador
   private playerFouls = new Map<number, number>();
 
   constructor(private api: ApiService, private audio: AudioService, private notifications: NotificationService) {}
 
   ngOnChanges(ch: SimpleChanges) {
     if (!this.game) return;
-    // cargar jugadores del partido por lado
+    // Cargar jugadores de ambos equipos
     this.api.listGamePlayers(this.game.gameId, 'HOME').subscribe(p => (this.homePlayers = p));
     this.api.listGamePlayers(this.game.gameId, 'AWAY').subscribe(p => (this.awayPlayers = p));
-    // actualizar contadores de faltas por cuarto
+    // Actualizar conteo de faltas
     this.refreshFouls();
   }
 
@@ -63,10 +63,10 @@ export class ControlPanelComponent implements OnChanges {
   canAdvance(): boolean {
     if (!this.game || this.game.status !== 'IN_PROGRESS') return false;
     
-    // Quarters 1-3: always can advance
+    // Cuartos 1-3: siempre se puede avanzar
     if (this.game.quarter < 4) return true;
     
-    // Quarter 4+: only if tied (forces overtime)
+    // Cuarto 4+: solo si hay empate (fuerza tiempo extra)
     return this.game.homeScore === this.game.awayScore;
   }
 
@@ -94,14 +94,14 @@ export class ControlPanelComponent implements OnChanges {
 
   start()   { this.api.start(this.game.gameId).subscribe(() => this.refresh()); }
   advance() { 
-    // Determinar a qué cuarto vamos a pasar
+    // Siguiente cuarto
     const nextQuarter = this.game.quarter + 1;
     const isOvertimeStart = nextQuarter >= 5;
 
     this.api.advance(this.game.gameId).subscribe(() => { 
       this.refresh(); 
       this.refreshFouls(); 
-      // Sonido según el tipo de avance
+      // Reproducir sonido apropiado
       if (isOvertimeStart) {
         this.audio.playOvertimeStart();
         alert('Inicia Tiempo Extra');
@@ -128,18 +128,17 @@ export class ControlPanelComponent implements OnChanges {
 
   foul(team:'HOME'|'AWAY') {
     const playerId = team === 'HOME' ? this.selHomePlayerId : this.selAwayPlayerId;
-    // Guardar conteo previo de faltas de equipo para calcular transición
+    // Guardar conteo previo para detectar bonus
     const prevTeamCount = team === 'HOME' ? this.teamFouls.home : this.teamFouls.away;
     this.api.foul(this.game.gameId, team, { playerId }).subscribe(() => {
       this.refresh();
       this.refreshFouls();
-
-      // Notificación por bonus de equipo (>4 faltas)
+      // Notificar bonus de tiros libres
       setTimeout(() => {
         const newTeamCount = team === 'HOME' ? this.teamFouls.home : this.teamFouls.away;
         if (newTeamCount !== prevTeamCount && newTeamCount > 4) {
           const over = newTeamCount - 4;
-          const shots = over === 1 ? 1 : 2; // 5 -> +1, 6+ -> +2
+          const shots = over === 1 ? 1 : 2; // Regla: 5ta falta = 1 TL, 6+ = 2 TL
           const rival = team === 'HOME' ? 'AWAY' : 'HOME';
           const rivalName = rival === 'HOME' ? this.game.homeTeam : this.game.awayTeam;
           const msg = shots === 1
@@ -149,15 +148,15 @@ export class ControlPanelComponent implements OnChanges {
         }
       }, 150);
 
-      // Regla: jugador con 5 faltas queda OUT (solo en este juego)
+      // Verificar eliminación por faltas
       if (playerId != null) {
-        // Espera corto para que se refleje el resumen antes de evaluar
+        // Esperar actualización del resumen
         setTimeout(() => {
           const count = this.playerFouls.get(playerId) ?? 0;
           if (count >= 5) {
             const pool = team === 'HOME' ? this.homePlayers : this.awayPlayers;
             const p: Player | undefined = pool.find(x => x.playerId === playerId);
-            // Limpiar selección si corresponde
+            // Limpiar selección del jugador eliminado
             if (team === 'HOME' && this.selHomePlayerId === playerId) this.selHomePlayerId = undefined;
             if (team === 'AWAY' && this.selAwayPlayerId === playerId) this.selAwayPlayerId = undefined;
 
@@ -196,8 +195,8 @@ export class ControlPanelComponent implements OnChanges {
     this.api.removeScore(this.game.gameId, team).subscribe(() => this.refresh());
   }
 
-  // Helpers de UI
-  // OUT: solo por faltas del juego actual (no depende de 'active' global)
+  // Helpers para la interfaz
+  // Jugador eliminado por faltas
   isPlayerOut(p: Player): boolean {
     const fouls = this.playerFouls.get(p.playerId) ?? 0;
     return fouls >= 5;

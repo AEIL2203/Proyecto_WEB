@@ -23,20 +23,15 @@ interface ClockStateDto {
 
 @Injectable({ providedIn: 'root' })
 export class ClockService {
-  // OJO: si tu proxy ya mapea /api -> backend, déjalo así.
-  // Si NO usas proxy, usa la URL completa del backend (p. ej. 'http://localhost:5280/api').
+  // Base URL para las peticiones del reloj
   private base = '/api';
 
-  /** Notifica que el clock de un gameId cambió (start/pause/reset en cualquier vista) */
+  // Notifica cambios en el reloj para sincronizar vistas
   private clockChanged$ = new Subject<number>();
 
   constructor(private http: HttpClient) {}
 
-  /** Estado del reloj:
-   *  - polling cada 1s
-   *  - refresco inmediato cuando clockChanged$ emite
-   *  - tolerante a errores (no mata el stream)
-   */
+  // Estado del reloj con polling automático y sincronización
   state$(gameId: number): Observable<ClockState> {
     return merge(
       interval(1000).pipe(startWith(0)),
@@ -49,7 +44,7 @@ export class ClockService {
             remainingMs: dto.remainingMs,
             quarterMs: dto.quarterMs
           })),
-          // Si falla el GET (404/red), mantenemos el stream vivo con un estado neutro
+          // Mantiene el stream activo aunque falle la petición
           catchError(() => of<ClockState>({ running: false, remainingMs: 0, quarterMs: 0 }))
         )
       ),
@@ -57,21 +52,21 @@ export class ClockService {
     );
   }
 
-  /** Inicia/Reanuda en servidor y avisa a todas las vistas */
+  // Inicia o reanuda el reloj
   start(gameId: number) {
     this.http.post(`${this.base}/games/${gameId}/clock/start`, {})
       .pipe(tap(() => this.clockChanged$.next(gameId)))
       .subscribe({ error: () => {/* opcional: toast/log */} });
   }
 
-  /** Pausa en servidor y avisa a todas las vistas */
+  // Pausa el reloj
   pause(gameId: number) {
     this.http.post(`${this.base}/games/${gameId}/clock/pause`, {})
       .pipe(tap(() => this.clockChanged$.next(gameId)))
       .subscribe({ error: () => {/* opcional: toast/log */} });
   }
 
-  /** Resetea en servidor */
+  // Reinicia el reloj
   resetForNewQuarter(gameId: number, quarterMs?: number) {
     const body = quarterMs ? { quarterMs } : {};
     this.http.post(`${this.base}/games/${gameId}/clock/reset`, body)

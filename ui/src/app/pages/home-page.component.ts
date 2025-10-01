@@ -36,41 +36,41 @@ import { PermissionsService } from '../services/permissions.service';
   styleUrls: ['./home-page.component.scss'],
 })
 export class HomePageComponent implements OnInit {
-  // filtros / estado
+  // Estado general
   q = '';
   creating = false;
   advancing = false;
 
-  // Control de secciones de navegación
+  // Sección activa en la navegación
   activeSection = 'games';
 
-  // Nombre del equipo a crear
+  // Datos para crear nuevo equipo
   newTeamName = '';
   newTeamCity: string | null = null;
   
   private teamNameRegex = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ ]+$/;
 
-  // Logo del equipo (drag & drop o file input) para creación
+  // Logo para el nuevo equipo
   newTeamLogoFile: File | null = null;
   newTeamLogoPreviewUrl: string | null = null;
   
-  // Duración del cuarto seleccionada (en milisegundos)
+  // Duración del cuarto en milisegundos
   selectedQuarterMs = 720000; // Default 12 min
 
-  // datos
+  // Datos principales
   teams: Team[] = [];
   games: Game[] = [];
   detail: GameDetail | null = null;
   teamsQuery: string = '';
   
-  // Edición inline de equipos existentes
+  // Edición de equipos
   editingTeamId: number | null = null;
   editTeamName: string = '';
   editTeamCity: string | null = null;
   editLogoFile: File | null = null;
   editLogoPreviewUrl: string | null = null;
 
-  // Control de vista de detalles
+  // Modo de vista del juego
   viewMode: 'scoreboard' | 'controls' | null = null;
 
   constructor(
@@ -85,7 +85,7 @@ export class HomePageComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Permite abrir vistas desde URL: ?section=teams|games|players y ?id=&mode=
+    // Navegación por parámetros de URL
     this.route.queryParamMap.subscribe((params: ParamMap) => {
       const section = (params.get('section') || '').toLowerCase();
       if (section === 'teams' || section === 'games' || section === 'players') {
@@ -102,38 +102,38 @@ export class HomePageComponent implements OnInit {
     });
   }
 
-  // Navegación/usuario
+  // Navegación y usuario
   onSectionChange(section: string) { this.activeSection = section; }
   isAdmin(): boolean { return this.auth.isAdmin(); }
   getCurrentUser() { return this.auth.getUser(); }
   logout() { this.auth.logout(); }
 
-  // Métodos de permisos
+  // Permisos del usuario
   canCreate(): boolean { return this.permissions.canCreate(); }
   canEdit(): boolean { return this.permissions.canEdit(); }
   canDelete(): boolean { return this.permissions.canDelete(); }
   canControlGames(): boolean { return this.permissions.canControlGames(); }
 
-  // Validaciones
+  // Validación de datos
   isTeamNameValid(value: string): boolean {
     const v = (value ?? '').trim();
     if (!v) return false;
     return this.teamNameRegex.test(v);
   }
 
-  // Logo helpers
+  // Utilidades para logos
   teamLogoUrl(teamId: number): string { return this.api.getTeamLogoUrl(teamId); }
   onTeamLogoError(ev: Event) {
     const img = ev.target as HTMLImageElement | null;
     if (img) img.style.display = 'none';
   }
 
-  // Carga inicial
+  // Carga de datos
   reloadAll() {
     this.api.listTeams().subscribe((t: Team[]) => (this.teams = t));
     this.reloadGames();
   }
-  // Lista filtrada (por nombre o #ID) y ordenada alfabéticamente
+  // Lista de equipos filtrada y ordenada
   get filteredTeams(): Team[] {
     const q = (this.teamsQuery ?? '').trim().toLowerCase();
     const base = !q
@@ -149,7 +149,7 @@ export class HomePageComponent implements OnInit {
     this.api.getGame(id).subscribe((d: GameDetail) => (this.detail = d));
   }
 
-  // Crear enfrentamiento a partir de IDs de equipo
+  // Crear partido entre equipos
   createGame(homeTeamId: number, awayTeamId: number) {
     if (!homeTeamId || !awayTeamId) return;
     if (homeTeamId === awayTeamId) {
@@ -179,7 +179,7 @@ export class HomePageComponent implements OnInit {
     });
   }
 
-  // ===== Edición de equipos =====
+  // Edición de equipos
   startEditTeam(t: Team) {
     this.editingTeamId = t.teamId;
     this.editTeamName = t.name;
@@ -189,7 +189,7 @@ export class HomePageComponent implements OnInit {
     this.editLogoPreviewUrl = null;
   }
 
-  // Baja lógica de equipo
+  // Desactivar equipo
   deleteTeam(t: Team) {
     if (!t?.teamId) return;
     const name = t.name;

@@ -13,16 +13,16 @@ import { ControlPageComponent } from './pages/control-page.component';
 import { TournamentPageComponent } from './pages/tournament-page.component';
 
 export const routes: Routes = [
-  { path: '', component: HomePageComponent, canActivate: [authGuard] }, // tablero de control (protegido)
-  { path: 'welcome', component: WelcomePageComponent, canActivate: [authGuard] }, // pantalla de bienvenida (protegido)
-  { path: 'tournament', component: TournamentPageComponent, canActivate: [authGuard] }, // página de torneos (protegido)
-  { path: 'controls/:id', component: ControlPageComponent, canActivate: [adminGuard] }, // página dedicada de controles (solo admin)
+  { path: '', component: HomePageComponent, canActivate: [authGuard] }, // página principal
+  { path: 'welcome', component: WelcomePageComponent, canActivate: [authGuard] }, // bienvenida
+  { path: 'tournament', component: TournamentPageComponent, canActivate: [authGuard] }, // torneos
+  { path: 'controls/:id', component: ControlPageComponent, canActivate: [adminGuard] }, // controles de juego
   { path: 'login', component: LoginPageComponent },
   { path: 'register', component: RegisterUserPageComponent }, // registro público
-  { path: 'admin/users', component: UserListPageComponent, canActivate: [adminGuard] }, // lista de usuarios (solo admin)
-  { path: 'admin/register-user', component: RegisterUserPageComponent, canActivate: [adminGuard] }, // solo administradores
-  { path: 'display/:id', component: DisplayPageComponent },   // tablero público 
-  { path: 'results', component: ResultsPageComponent },       // página de resultados
-  { path: 'players/new', component: PlayerFormPageComponent, canActivate: [adminGuard] }, // formulario de jugador (solo admin)
+  { path: 'admin/users', component: UserListPageComponent, canActivate: [adminGuard] }, // gestión de usuarios
+  { path: 'admin/register-user', component: RegisterUserPageComponent, canActivate: [adminGuard] }, // crear usuario
+  { path: 'display/:id', component: DisplayPageComponent },   // marcador público
+  { path: 'results', component: ResultsPageComponent },       // resultados
+  { path: 'players/new', component: PlayerFormPageComponent, canActivate: [adminGuard] }, // crear jugador
   { path: '**', redirectTo: '' }
 ];

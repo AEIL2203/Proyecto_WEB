@@ -778,8 +778,8 @@ export class UserListPageComponent implements OnInit {
   }
 
   getCurrentUserId(): number {
-    // Esto debería venir del AuthService cuando tengamos el ID del usuario actual
-    return 0; // Por ahora retornamos 0 para evitar errores
+    // TODO: Obtener del AuthService
+    return 0;
   }
 
   formatDate(dateString: string): string {

@@ -23,11 +23,11 @@ import { TeamFoulsPipe, PlayerFoulsTotalPipe, IsBonusPipe } from './ui.pipes';
   templateUrl: './results-page.component.html',
 })
 export class ResultsPageComponent {
-  // filtros
+  // Filtros de búsqueda
   q = '';
   statusFilter: 'ALL' | 'FINISHED' | 'IN_PROGRESS' | 'SCHEDULED' = 'FINISHED';
 
-  // datos
+  // Datos del componente
   games: Game[] = [];
   filtered: Game[] = [];
   selected: GameDetail | null = null;
@@ -35,17 +35,17 @@ export class ResultsPageComponent {
   awayRoster: Player[] = [];
   foulSummary: FoulSummary | null = null;
 
-  // jugadores fuera por 5 faltas o por descalificación
+  // Jugadores eliminados
   outSet = new Set<number>();
 
   constructor(private api: ApiService, private route: ActivatedRoute) {
     this.reload();
 
-    // si vienen con ?id=123, cargar ese juego automáticamente
+    // Cargar juego desde parámetro URL
     const idParam = this.route.snapshot.queryParamMap.get('id');
     const id = idParam ? Number(idParam) : NaN;
     if (!Number.isNaN(id)) {
-      // carga directa del detalle (por si la lista aún no está)
+      // Carga directa del detalle
       this.api.getGame(id).subscribe(d => {
         this.selected = d;
         this.loadAuxFor(d.game.gameId);
@@ -53,7 +53,7 @@ export class ResultsPageComponent {
     }
   }
 
-  // ===== Listado y filtros =====
+  // Listado y filtros
   reload() {
     this.api.listGames().subscribe((g) => {
       this.games = g;
@@ -71,7 +71,7 @@ export class ResultsPageComponent {
     });
   }
 
-  // ===== Detalle =====
+  // Detalle del juego
   view(game: Game | number) {
     const gameId = typeof game === 'number' ? game : game.gameId;
     forkJoin({
@@ -80,7 +80,7 @@ export class ResultsPageComponent {
       away: this.api.listGamePlayers(gameId, 'AWAY'),
       summary: this.api.getFoulSummary(gameId),
     }).subscribe(({ detail, home, away, summary }) => {
-      // eventos recientes primero
+      // Ordenar eventos por fecha
       detail.events = [...detail.events].sort((a, b) =>
         b.createdAt.localeCompare(a.createdAt)
       );
@@ -92,7 +92,7 @@ export class ResultsPageComponent {
     });
   }
 
-  /** Carga rosters + summary cuando ya tengo selected.game (se usa al entrar por ?id=...) */
+  // Carga rosters y resumen del juego seleccionado
   private loadAuxFor(gameId: number) {
     forkJoin({
       home: this.api.listGamePlayers(gameId, 'HOME'),
@@ -106,19 +106,19 @@ export class ResultsPageComponent {
     });
   }
 
-  /** Marca jugadores OUT por llegar a 5 faltas o por evento FOUL_OUT/DQ */
+  // Marca jugadores eliminados por faltas
   private computeOuts() {
     this.outSet.clear();
     if (!this.selected) return;
 
-    // 1) FOUL_OUT / (si tu backend emite otro tipo para descalificación, agrégalo aquí)
+    // Jugadores descalificados por eventos
     for (const e of this.selected.events) {
       if ((e.eventType === 'FOUL_OUT' || e.eventType === 'DISQUALIFIED') && e.playerId != null) {
         this.outSet.add(e.playerId);
       }
     }
 
-    // 2) Totales por jugador desde el summary (>=5 personales)
+    // Jugadores con 5+ faltas personales
     const rows = this.foulSummary?.players ?? [];
     const countByPlayer = new Map<number, number>();
     for (const r of rows) {

@@ -11,13 +11,13 @@ export const adminGuard: CanActivateFn = () => {
   
   console.log('🛡️ AdminGuard: Verificando acceso...');
   
-  // En SSR (no navegador), permitir navegación; el cliente aplicará el guard correctamente
+  // Permitir navegación en SSR
   if (!isPlatformBrowser(platformId)) {
     console.log('🛡️ AdminGuard: SSR detectado, permitiendo navegación');
     return true;
   }
 
-  // Verificar si está autenticado
+  // Verificar login
   const isAuthenticated = auth.isAuthenticated();
   console.log('🛡️ AdminGuard: ¿Autenticado?', isAuthenticated);
   
@@ -27,13 +27,13 @@ export const adminGuard: CanActivateFn = () => {
     return false;
   }
 
-  // Verificar si es administrador
+  // Verificar rol admin
   const user = auth.getUser();
   console.log('🛡️ AdminGuard: Usuario actual:', user);
   
   if (user?.role !== 'Admin') {
     console.log('🛡️ AdminGuard: No es admin, redirigiendo al home');
-    // Redirigir al home si no es admin
+    // Redirigir si no es admin
     router.navigate(['/']);
     return false;
   }

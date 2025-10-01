@@ -1,13 +1,13 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
-// Aceptamos 'HOME'|'AWAY' o string (por compatibilidad con FoulSummary del ApiService)
+// Tipos compatibles para equipos HOME/AWAY
 type TeamKey = 'HOME' | 'AWAY';
 type MaybeTeam = TeamKey | string;
 
 export interface TeamAggLike { quarter: number; team: MaybeTeam; fouls: number; }
 export interface PlayerAggLike { quarter: number; team: MaybeTeam; playerId: number; fouls: number; }
 
-// Guard utilitario
+// Convierte string a TeamKey
 function toTeamKey(x: MaybeTeam): TeamKey | null {
   const t = (x ?? '').toString().toUpperCase();
   return t === 'HOME' ? 'HOME' : t === 'AWAY' ? 'AWAY' : null;
@@ -30,7 +30,7 @@ export class IsBonusPipe implements PipeTransform {
     const fouls = teamAgg
       .filter(r => toTeamKey(r.team) === team && r.quarter === quarter)
       .reduce((a, r) => a + (r.fouls ?? 0), 0);
-    return fouls >= 5; // Regla FIBA
+    return fouls >= 5; // Bonus a partir de 5 faltas
   }
 }
 
@@ -47,9 +47,7 @@ export class PlayerFoulsTotalPipe implements PipeTransform {
 
 @Pipe({ name: 'playerFoulsQ', standalone: true })
 export class PlayerFoulsQPipe implements PipeTransform {
-  /**
-   * Devuelve la cantidad de faltas de un jugador en un cuarto específico.
-   */
+  // Faltas de un jugador en un cuarto específico
   transform(
     playerAgg: PlayerAggLike[] | null | undefined,
     team: TeamKey,

@@ -21,17 +21,17 @@ import { ApiService, Tournament, CreateTournament } from '../services/api.servic
   templateUrl: './tournament-page.component.html'
 })
 export class TournamentPageComponent implements OnInit {
-  // Propiedades básicas para la página de torneo
+  // Estado de la página
   activeSection = 'tournament';
   
-  // Control de tabs
+  // Pestaña activa
   activeTab = 'create'; // 'create' o 'view'
   
-  // Lista de torneos
+  // Datos de torneos
   tournaments: Tournament[] = [];
   loading = false;
   
-  // Formulario de creación
+  // Nuevo torneo
   newTournament: CreateTournament = {
     nombreTorneo: '',
     descripcion: '',
@@ -45,14 +45,14 @@ export class TournamentPageComponent implements OnInit {
     private notifications: NotificationService,
     private apiService: ApiService
   ) {
-    // Inicialización básica
+    // Constructor
   }
 
   ngOnInit() {
     this.loadTournaments();
   }
 
-  // Métodos para el panel de usuario
+  // Usuario
   getCurrentUser(): AuthUser | null {
     return this.authService.getUser();
   }
@@ -63,7 +63,7 @@ export class TournamentPageComponent implements OnInit {
   }
 
 
-  // Método para cambiar de tab
+  // Cambiar pestaña
   setActiveTab(tab: string) {
     this.activeTab = tab;
     const tabNames = {
@@ -75,13 +75,13 @@ export class TournamentPageComponent implements OnInit {
       this.notifications.showInfo(`📍 Pestaña activa: ${tabName}`, 2000);
     }
     
-    // Cargar torneos cuando se cambie a la pestaña de ver
+    // Cargar datos al ver torneos
     if (tab === 'view') {
       this.loadTournaments();
     }
   }
 
-  // Cargar lista de torneos
+  // Cargar torneos
   loadTournaments() {
     this.loading = true;
     this.apiService.getTournaments().subscribe({
@@ -97,7 +97,7 @@ export class TournamentPageComponent implements OnInit {
     });
   }
 
-  // Crear nuevo torneo
+  // Crear torneo
   createTournament() {
     if (!this.newTournament.nombreTorneo.trim()) {
       this.notifications.showError('El nombre del torneo es obligatorio', 3000);
@@ -121,7 +121,7 @@ export class TournamentPageComponent implements OnInit {
     });
   }
 
-  // Resetear formulario
+  // Limpiar formulario
   resetForm() {
     this.newTournament = {
       nombreTorneo: '',
@@ -150,12 +150,12 @@ export class TournamentPageComponent implements OnInit {
     }
   }
 
-  // TrackBy function para optimizar el ngFor
+  // Optimización de lista
   trackByTournamentId(index: number, tournament: Tournament): number {
     return tournament.idTorneo;
   }
 
-  // Obtener texto del estado
+  // Texto del estado
   getStatusText(estado: string): string {
     const statusMap: { [key: string]: string } = {
       'PROGRAMADO': 'Programado',

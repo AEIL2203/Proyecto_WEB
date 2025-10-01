@@ -61,7 +61,7 @@ export class NavigationBarComponent {
     }
   }
 
-  // Métodos de permisos
+  // Permisos
   canCreate(): boolean {
     return this.permissions.canCreate();
   }

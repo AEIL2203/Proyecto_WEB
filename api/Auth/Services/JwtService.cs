@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Api.Auth.Services;
 
+// Generación de tokens JWT
 public interface IJwtService
 {
     string CreateToken(string userName, string role, TimeSpan? expires = null);
@@ -16,6 +17,7 @@ public sealed class JwtService : IJwtService
     private readonly IConfiguration _cfg;
     public JwtService(IConfiguration cfg) => _cfg = cfg;
 
+    // Genera un token JWT con los claims del usuario
     public string CreateToken(string userName, string role, TimeSpan? expires = null)
     {
         var issuer = _cfg["Jwt:Issuer"] ?? "marcador-api";

@@ -9,7 +9,7 @@ export class AudioService {
   private isEnabled = true;
 
   constructor() {
-    // Precargar el audio para mejor rendimiento
+    // Precargar sonidos
     this.preloadAudio();
   }
 
@@ -18,7 +18,7 @@ export class AudioService {
       this.whistleAudio = new Audio();
       this.whistleAudio.src = '/assets/sounds/whistle.mp3';
       this.whistleAudio.preload = 'auto';
-      this.whistleAudio.volume = 0.7; // Volumen al 70%
+      this.whistleAudio.volume = 0.7;
 
       this.scoreAudio = new Audio();
       this.scoreAudio.src = '/assets/sounds/score.mp3';
@@ -29,25 +29,23 @@ export class AudioService {
     }
   }
 
-  /**
-   * Reproduce el sonido de silbato para fin de cuarto
-   */
+  // Reproduce silbato de fin de cuarto
   playQuarterEndWhistle(): void {
     if (!this.isEnabled || !this.whistleAudio) {
       return;
     }
 
     try {
-      // Reiniciar el audio si ya se está reproduciendo
+      // Reiniciar reproducción
       this.whistleAudio.currentTime = 0;
       
       const playPromise = this.whistleAudio.play();
       
-      // Manejar navegadores que requieren interacción del usuario
+      // Manejar política de autoplay
       if (playPromise !== undefined) {
         playPromise.catch(error => {
           console.warn('No se pudo reproducir el silbato automáticamente:', error);
-          // Intentar reproducir después de la próxima interacción del usuario
+          // Habilitar en próxima interacción
           this.enableAudioOnNextInteraction();
         });
       }
@@ -56,9 +54,7 @@ export class AudioService {
     }
   }
 
-  /**
-   * Reproduce sonido de anotación
-   */
+  // Reproduce sonido de anotación
   playScore(): void {
     if (!this.isEnabled || !this.scoreAudio) return;
     try {
@@ -68,39 +64,29 @@ export class AudioService {
     } catch {}
   }
 
-  /**
-   * Reproduce sonido para inicio de tiempo extra (reutiliza silbato)
-   */
+  // Sonido de inicio de tiempo extra
   playOvertimeStart(): void {
     this.playQuarterEndWhistle();
   }
 
-  /**
-   * Reproduce sonido al finalizar el partido (reutiliza silbato + score suave)
-   */
+  // Sonido de fin de partido
   playGameEnd(): void {
     this.playQuarterEndWhistle();
-    // Pequeño retardo para encadenar el score como confirmación
+    // Encadenar sonidos
     setTimeout(() => this.playScore(), 250);
   }
 
-  /**
-   * Habilita/deshabilita los sonidos
-   */
+  // Habilitar/deshabilitar sonidos
   setEnabled(enabled: boolean): void {
     this.isEnabled = enabled;
   }
 
-  /**
-   * Obtiene el estado de habilitación de audio
-   */
+  // Estado de habilitación
   isAudioEnabled(): boolean {
     return this.isEnabled;
   }
 
-  /**
-   * Maneja la política de autoplay de los navegadores
-   */
+  // Maneja política de autoplay
   private enableAudioOnNextInteraction(): void {
     const enableAudio = () => {
       if (this.whistleAudio) {
@@ -108,7 +94,7 @@ export class AudioService {
           this.whistleAudio!.pause();
           this.whistleAudio!.currentTime = 0;
         }).catch(() => {
-          // Silenciar errores de autoplay
+          // Ignorar errores
         });
       }
       if (this.scoreAudio) {
@@ -118,7 +104,7 @@ export class AudioService {
         }).catch(() => {});
       }
       
-      // Remover listeners después del primer uso
+      // Limpiar listeners
       document.removeEventListener('click', enableAudio);
       document.removeEventListener('touchstart', enableAudio);
       document.removeEventListener('keydown', enableAudio);

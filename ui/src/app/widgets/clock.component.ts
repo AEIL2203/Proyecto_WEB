@@ -27,9 +27,9 @@ export class ClockComponent implements OnChanges, OnDestroy {
   @Input() status?: 'SCHEDULED' | 'IN_PROGRESS' | 'FINISHED';
   @Input() quarter?: number;
   @Input() showTeamFouls = true; 
-  /** Mostrar/ocultar botones (en público: [controls]="false") */
+  // Mostrar controles del reloj
   @Input() controls = true;
-  /** Enable test mode with 30-second quarters */
+  // Modo de prueba con cuartos de 30 segundos
   @Input() testMode = false;
 
   @Output() expired = new EventEmitter<void>();
@@ -41,7 +41,7 @@ export class ClockComponent implements OnChanges, OnDestroy {
   bonusHome = false;
   bonusAway = false;
 
-  private prevRemaining = -1; // guarda estado previo para detectar llegada a 0
+  private prevRemaining = -1; // Estado previo para detectar expiración
   private prevRunning = false;
   busy = false;
   private foulsSub?: Subscription; 
@@ -51,7 +51,7 @@ export class ClockComponent implements OnChanges, OnDestroy {
   ngOnChanges(ch: SimpleChanges): void {
     if (!this.gameId) return;
 
-    // 1) (Re)crear stream cuando cambia gameId
+    // Recrear stream del reloj si cambia el juego
     if (!this.vm$ || (ch['gameId'] && !ch['gameId'].firstChange && ch['gameId'].previousValue !== ch['gameId'].currentValue)) {
       this.prevRemaining = -1;
       this.prevRunning = false;
@@ -66,13 +66,13 @@ export class ClockComponent implements OnChanges, OnDestroy {
       );
     }
 
-    // 2) Si cambia el status, asegura start/pause del servicio
+    // Sincronizar reloj con el estado del juego
     if (ch['status'] && !ch['status'].firstChange && ch['status'].previousValue !== ch['status'].currentValue) {
       if (this.status === 'IN_PROGRESS') this.clock.start(this.gameId);
       else this.clock.pause(this.gameId);
     }
 
-    // 3) Si cambia el quarter realmente, reinicia duración (30s en test mode o la original)
+    // Reiniciar reloj al cambiar de cuarto
     if (ch['quarter'] && !ch['quarter'].firstChange && ch['quarter'].previousValue !== ch['quarter'].currentValue) {
       const quarterMs = this.testMode ? 30000 : undefined;
       this.clock.resetForNewQuarter(this.gameId, quarterMs);
@@ -97,28 +97,28 @@ export class ClockComponent implements OnChanges, OnDestroy {
   resetQuarter() {
     if (this.busy || !this.gameId) return;
     this.busy = true;
-    // Use 30 seconds for test mode, otherwise use default duration
+    // Usar 30 segundos en modo prueba
     const quarterMs = this.testMode ? 30000 : undefined;
     this.clock.resetForNewQuarter(this.gameId, quarterMs);
     setTimeout(() => (this.busy = false), 150);
   }
-  // +++ AÑADIR: inicia/renueva el polling de faltas
+  // Iniciar seguimiento de faltas
 private startFoulsPolling() {
   this.foulsSub?.unsubscribe();
 
-  // si no hay juego o el partido terminó, solo hace un refresh y no sigue
+  // Solo refrescar si no hay juego activo
   if (!this.gameId) return;
 
-  // refresco inmediato
+  // Actualizar inmediatamente
   this.refreshFouls();
 
-  // Si está en progreso, actualiza cada 2s; si no, no gasta polling
+  // Polling solo durante el juego
   if (this.status === 'IN_PROGRESS') {
     this.foulsSub = interval(2000).subscribe(() => this.refreshFouls());
   }
 }
 
-  // +++ AÑADIR: consulta el summary y calcula conteos/bonus del cuarto actual
+  // Actualizar conteo de faltas y bonus
   private refreshFouls() {
     if (!this.gameId) return;
     const curQ = this.quarter ?? 1;
@@ -133,12 +133,12 @@ private startFoulsPolling() {
         this.teamFoulsHome = sumOf('HOME');
         this.teamFoulsAway = sumOf('AWAY');
 
-        // Regla FIBA: bonus a partir de la 5ª falta del período
+        // Bonus a partir de la 5ta falta por cuarto
         this.bonusHome = this.teamFoulsHome >= 5;
         this.bonusAway = this.teamFoulsAway >= 5;
       },
       error: () => {
-        // no romper UI en caso de error/transitorio
+        // Mantener UI estable en caso de error
         this.teamFoulsHome = 0;
         this.teamFoulsAway = 0;
         this.bonusHome = this.bonusAway = false;

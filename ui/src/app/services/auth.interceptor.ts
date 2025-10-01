@@ -6,7 +6,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const token = auth.getToken();
 
-  // No attach for auth endpoints
+  // No agregar token a endpoints de autenticación
   if (req.url.includes('/api/auth')) {
     return next(req);
   }
